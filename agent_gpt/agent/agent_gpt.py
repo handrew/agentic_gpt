@@ -21,7 +21,6 @@ DONE_FUNCTION = "declare_done"
 
 def declare_done():
     """Declare that you are done with your objective."""
-    print("I have completed my objective.")
 
 
 DEFAULT_ACTIONS = [
@@ -94,6 +93,13 @@ class AgentGPT:
         - a `memory_dict` which it uses to keep track of the files it has in its memory
         """
         assert actions_available, "`actions_available` must be specified."
+        # Check that the actions_available don't have name collisions with the
+        # default actions.
+        for action in actions_available:
+            assert (
+                action.name not in [action.name for action in DEFAULT_ACTIONS]
+            ), f"Action {action.name} collides with a default action."
+
         # Set the variables given to the agent.
         self.objective = objective
         self.max_steps = max_steps
