@@ -1,6 +1,6 @@
 # 🪽 AgenticGPT
 
-## Getting Started
+## 🎬 Getting Started
 ### 🔨 Installation
 1. `pip install -r requirements.txt`
 2. Set up your OpenAI API key as the `OPENAI_API_KEY` environment variable.
@@ -8,7 +8,14 @@
 ### 🦭 Usage
 AgenticGPT can be instantiated with the following signature:
 ```python
-AgenticGPT(objective, actions_available=[], memory_dict={}, max_steps=100, model="gpt-3.5-turbo", verbose=False)
+AgenticGPT(
+    objective,
+    actions_available=[],
+    memory_dict={},
+    max_steps=100,
+    model="gpt-3.5-turbo",
+    verbose=False
+)
 ```
 All you have to do is give it a string `objective`, define a list of `Action`s, and optionally give it a `memory_dict` of `name` to `text` for it to remember.
 
@@ -75,7 +82,7 @@ See [request for comment](docs/motivation-rfc.md) for the original motivation fo
 - [x] Save and load routine to file
 - [x] Write some initial docs. Be sure to add emojis because people can't get enough emojis
 - [ ] Make some diagrams describing the architecture
-- [ ] Create and document examples
+- [ ] Create and document examples. Start setting up a library of actions.
 - [ ] Create chatbot mode where it stops after every step and asks you how it's doing
 - [ ] Recursively modularize the context window in case it gets too long
 

@@ -14,6 +14,8 @@ SUPPORTED_MODELS = ["gpt-3.5-turbo", "gpt-4"]
 """Define default actions for the agent."""
 
 CLARIFY_FUNCTION = "ask_user_to_clarify"
+
+
 def ask_user_to_clarify(question: str) -> str:
     """Ask the user a question and return their answer."""
     user_response = input(question + " ")
@@ -22,6 +24,8 @@ def ask_user_to_clarify(question: str) -> str:
 
 
 DONE_FUNCTION = "declare_done"
+
+
 def declare_done():
     """Declare that you are done with your objective."""
 
@@ -85,7 +89,13 @@ EXAMPLE_RESPONSE_FORMAT = """
 
 class AgenticGPT:
     def __init__(
-        self, objective, actions_available=[], memory_dict={}, model="gpt-3.5-turbo", max_steps=100, verbose=False,
+        self,
+        objective,
+        actions_available=[],
+        memory_dict={},
+        model="gpt-3.5-turbo",
+        max_steps=100,
+        verbose=False,
     ):
         """Initialize the agent. An agent is given the following args:
         @param objective: The objective of the agent.
@@ -98,7 +108,9 @@ class AgenticGPT:
         - a list of actions that it has taken so far
         - a `memory_dict` which it uses to keep track of the files it has in its memory
         """
-        assert model in SUPPORTED_MODELS, f"Model {model} not supported. Supported models are {SUPPORTED_MODELS}."
+        assert (
+            model in SUPPORTED_MODELS
+        ), f"Model {model} not supported. Supported models are {SUPPORTED_MODELS}."
         self.model = model
 
         # Set the variables given to the agent.
@@ -138,10 +150,10 @@ class AgenticGPT:
         # Check that the actions_available don't have name collisions with the
         # default actions.
         for action in given_actions:
-            assert (
-                action.name not in [action.name for action in default_actions]
-            ), f"Action {action.name} collides with a default action."
-        
+            assert action.name not in [
+                action.name for action in default_actions
+            ], f"Action {action.name} collides with a default action."
+
         return self.actions_available
 
     def __get_available_actions(self) -> str:
@@ -180,7 +192,7 @@ class AgenticGPT:
         """Get a string to inject into the prompt telling the agent what
         the state of the world is."""
         return self.context
-    
+
     def from_saved_actions(self, path: str):
         """Load the agent from a list of actions taken."""
         with open(path, "r") as f:
@@ -189,7 +201,7 @@ class AgenticGPT:
             self.actions_taken = saved_dict["actions"]
             print("Agent objective: ", self.objective)
             print(f"Loaded f{len(self.actions_taken)} actions.")
-    
+
     def replay(self):
         """Replay the actions taken by the agent."""
         for action in self.actions_taken:
@@ -204,7 +216,7 @@ class AgenticGPT:
             for action in self.actions_taken:
                 if action["command"]["action"] != CLARIFY_FUNCTION:
                     actions_taken.append(action)
-            
+
             saved_dict = {
                 "objective": self.objective,
                 "actions": actions_taken,
@@ -264,7 +276,9 @@ class AgenticGPT:
                 if "args" in response_obj["command"]:
                     new_context += " given args " + str(response_obj["command"]["args"])
                 if "kwargs" in response_obj["command"]:
-                    new_context += " given kwargs " + str(response_obj["command"]["kwargs"])
+                    new_context += " given kwargs " + str(
+                        response_obj["command"]["kwargs"]
+                    )
                 new_context += "\n"
                 self.context = new_context
                 logger.debug(new_context)

@@ -59,7 +59,9 @@ class Memory:
             summary_obj = summarize_documents(llama_docs)
             self.summaries = summary_obj["summaries"]
             self.doc_indexes = summary_obj["indexes"]
-            self.router_index = init_index([Document(summary) for summary in self.summaries])
+            self.router_index = init_index(
+                [Document(summary) for summary in self.summaries]
+            )
         else:
             self.summaries = []
             self.doc_indexes = []
@@ -71,7 +73,7 @@ class Memory:
 
     def to_prompt_string(self):
         """Print the memory as a string which can be injected into a prompt.
-        
+
         The format is:
         - <document 1 name>:
             Summary: <document 1 summary>
@@ -102,13 +104,13 @@ class Memory:
             response = query_engine.query(query)
             text_response = response.response
             doc_responses.append(text_response)
-        
+
         list_index = init_index(doc_responses, index_type="list")
         query_engine = list_index.as_query_engine(response_mode="tree_summarize")
         response = query_engine.query(query)
         context = f"The answer returned from memory is: {response.response}"
         return {"answer": response.response, "context": context}
-    
+
     def query_one(self, query):
         """Query and get a response synthesized from one of the docs."""
         query_engine = self.router_index.as_query_engine(response_mode="tree_summarize")

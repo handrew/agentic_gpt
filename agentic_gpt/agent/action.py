@@ -20,7 +20,9 @@ class Action:
         func_signature = ", ".join(
             [str(param) for param in signature(self.function).parameters.values()]
         )
-        return f"`{self.name}`, called with params ({func_signature}): {self.description}"
+        return (
+            f"`{self.name}`, called with params ({func_signature}): {self.description}"
+        )
 
     def execute(self, *args):
         """Execute the action with the given arguments."""
