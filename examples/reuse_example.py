@@ -20,5 +20,5 @@ if __name__ == "__main__":
         "Ask the user what folder they want to make and make it for them.",
         actions_available=actions,
     )
-    agent.run()
-    agent.save_actions_taken("mkdir.json")
+    agent.from_saved_actions("mkdir.json")
+    agent.replay()

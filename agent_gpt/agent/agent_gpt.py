@@ -176,6 +176,20 @@ class AgentGPT:
         the state of the world is."""
         return self.context
     
+    def from_saved_actions(self, path: str):
+        """Load the agent from a list of actions taken."""
+        with open(path, "r") as f:
+            saved_dict = json.load(f)
+            self.objective = saved_dict["objective"]
+            self.actions_taken = saved_dict["actions"]
+            print("Agent objective: ", self.objective)
+            print(f"Loaded f{len(self.actions_taken)} actions.")
+    
+    def replay(self):
+        """Replay the actions taken by the agent."""
+        for action in self.actions_taken:
+            self.process_response(action)
+
     def save_actions_taken(self, path: str):
         """Save the actions taken by the agent to a file."""
         with open(path, "w+") as f:
@@ -185,7 +199,12 @@ class AgentGPT:
             for action in self.actions_taken:
                 if action["command"]["action"] != CLARIFY_FUNCTION:
                     actions_taken.append(action)
-            json.dump(actions_taken, f, indent=2)
+            
+            saved_dict = {
+                "objective": self.objective,
+                "actions": actions_taken,
+            }
+            json.dump(saved_dict, f, indent=2)
 
     def process_response(self, response_obj) -> Dict:
         chosen_action = response_obj["command"]["action"]
