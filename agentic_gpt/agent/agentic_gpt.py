@@ -9,6 +9,8 @@ from .utils.openai import get_completion
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+SUPPORTED_MODELS = ["gpt-3.5-turbo", "gpt-4"]
+
 """Define default actions for the agent."""
 
 CLARIFY_FUNCTION = "ask_user_to_clarify"
@@ -83,7 +85,7 @@ EXAMPLE_RESPONSE_FORMAT = """
 
 class AgenticGPT:
     def __init__(
-        self, objective, actions_available=[], memory_dict={}, max_steps=100, verbose=False,
+        self, objective, actions_available=[], memory_dict={}, model="gpt-3.5-turbo", max_steps=100, verbose=False,
     ):
         """Initialize the agent. An agent is given the following args:
         @param objective: The objective of the agent.
@@ -96,6 +98,9 @@ class AgenticGPT:
         - a list of actions that it has taken so far
         - a `memory_dict` which it uses to keep track of the files it has in its memory
         """
+        assert model in SUPPORTED_MODELS, f"Model {model} not supported. Supported models are {SUPPORTED_MODELS}."
+        self.model = model
+
         # Set the variables given to the agent.
         self.objective = objective
         self.max_steps = max_steps
@@ -243,7 +248,7 @@ class AgenticGPT:
                 logger.debug("AGENT PROMPT:")
                 logger.debug(prompt)
 
-            completion = get_completion(prompt)
+            completion = get_completion(prompt, model=self.model)
             steps += 1
 
             try:
