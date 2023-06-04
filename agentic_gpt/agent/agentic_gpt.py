@@ -1,4 +1,4 @@
-"""AgentGPT class."""
+"""AgenticGPT class."""
 import json
 import logging
 from typing import Dict
@@ -81,7 +81,7 @@ EXAMPLE_RESPONSE_FORMAT = """
 """
 
 
-class AgentGPT:
+class AgenticGPT:
     def __init__(
         self, objective, actions_available=[], memory_dict={}, max_steps=100, verbose=False,
     ):
