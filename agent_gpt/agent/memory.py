@@ -73,13 +73,16 @@ class Memory:
         """Print the memory as a string which can be injected into a prompt.
         
         The format is:
-        <document 1 name>: <document 1 summary>
-        <document 2 name>: <document 2 summary>
+        - <document 1 name>:
+            Summary: <document 1 summary>
+        - <document 2 name>:
+            Summary: <document 2 summary>
         ...
         """
         prompt = ""
         for name, summary in zip(self.documents.keys(), self.summaries):
-            prompt += f"{name}: {summary}\n"
+            prompt += f"- {name}:\n"
+            prompt += f"    Summary: {summary}\n"
         return prompt
 
     def add_document(self, document: str):
@@ -91,7 +94,7 @@ class Memory:
         self.doc_indexes.append(summary_obj["indexes"][0])
         self.router_index.insert(Document(self.summaries[-1]))
 
-    def query_all(self, query: str):
+    def query_all(self, query):
         """Query and get a response synthesized from all of the docs."""
         doc_responses = []
         for index in self.doc_indexes:
@@ -106,7 +109,7 @@ class Memory:
         context = f"The answer returned from memory is: {response.response}"
         return {"answer": response.response, "context": context}
     
-    def query_one(self, query: str):
+    def query_one(self, query):
         """Query and get a response synthesized from one of the docs."""
         query_engine = self.router_index.as_query_engine(response_mode="tree_summarize")
         response = query_engine.query(query)

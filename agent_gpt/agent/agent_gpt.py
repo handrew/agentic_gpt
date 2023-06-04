@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 """Define default actions for the agent."""
 
+CLARIFY_FUNCTION = "ask_user_to_clarify"
 def ask_user_to_clarify(question: str) -> str:
     """Ask the user a question and return their answer."""
     user_response = input(question + " ")
@@ -18,11 +19,10 @@ def ask_user_to_clarify(question: str) -> str:
     return {"context": context}
 
 
+DONE_FUNCTION = "declare_done"
 def declare_done():
     """Declare that you are done with your objective."""
 
-
-DONE_FUNCTION = "declare_done"
 
 DEFAULT_ACTIONS = [
     Action(
@@ -42,7 +42,7 @@ DEFAULT_ACTIONS = [
 AGENT_PROMPT = """You are an agent given the following objective: "{objective}"
 
 =============================================================
-You can take the following actions:
+You can take the following actions. args are denoted as (arg1: str, arg2: int), and kwargs are denoted as (kwarg1="default_value").):
 {actions}
 
 =============================================================
@@ -83,7 +83,7 @@ EXAMPLE_RESPONSE_FORMAT = """
 
 class AgentGPT:
     def __init__(
-        self, objective, actions_available=[], memory_dict={}, max_steps=100, verbose=True,
+        self, objective, actions_available=[], memory_dict={}, max_steps=100, verbose=False,
     ):
         """Initialize the agent. An agent is given the following args:
         @param objective: The objective of the agent.
@@ -104,7 +104,7 @@ class AgentGPT:
         self.actions_available = self.__init_actions_available(actions_available)
 
         self.actions_taken = []
-        self.context = None
+        self.context = ""
 
     def __init_actions_available(self, given_actions):
         """Initialize the actions available to the agent."""
@@ -175,13 +175,19 @@ class AgentGPT:
         """Get a string to inject into the prompt telling the agent what
         the state of the world is."""
         return self.context
+    
+    def save_actions_taken(self, path: str):
+        """Save the actions taken by the agent to a file."""
+        with open(path, "w+") as f:
+            # Iterate through the actions taken and remove the ones where
+            # we are asking the user to clarify.
+            actions_taken = []
+            for action in self.actions_taken:
+                if action["command"]["action"] != CLARIFY_FUNCTION:
+                    actions_taken.append(action)
+            json.dump(actions_taken, f, indent=2)
 
-    def process_response(self, response: str) -> Dict:
-        try:
-            response_obj = json.loads(response)
-        except json.decoder.JSONDecodeError:
-            raise ValueError("Response is not valid JSON.")
-
+    def process_response(self, response_obj) -> Dict:
         chosen_action = response_obj["command"]["action"]
         action_args = response_obj["command"]["args"]
         action_kwargs = response_obj["command"]["kwargs"]
@@ -198,14 +204,14 @@ class AgentGPT:
                     self.context = action_result["context"]
                 break
 
-        self.actions_taken.append(response_obj)
         return {"agent_response": response_obj, "action_result": action_result}
 
     def run(self):
         """Runs the agent."""
 
         action = None
-        while action is not DONE_FUNCTION and len(self.actions_taken) < self.max_steps:
+        steps = 0
+        while action is not DONE_FUNCTION and steps < self.max_steps:
             prompt = AGENT_PROMPT.format(
                 objective=self.objective,
                 actions=self.__get_available_actions(),
@@ -215,25 +221,36 @@ class AgentGPT:
                 example_response_format=EXAMPLE_RESPONSE_FORMAT,
             )
             if self.verbose:
-                print("\n" + "=" * 80)
-                print("AGENT PROMPT:")
-                print(prompt)
+                logger.debug("AGENT PROMPT:")
+                logger.debug(prompt)
 
             completion = get_completion(prompt)
+            steps += 1
 
             try:
-                processed = self.process_response(completion)
-            except:
-                new_context = f"\nThere was an error running the action {action.name}. Your thoughts and answer were: "
-                new_context += completion
-                self.context += new_context
-                print(new_context)
+                response_obj = json.loads(completion)
+            except json.decoder.JSONDecodeError:
                 continue
 
+            try:
+                processed = self.process_response(response_obj)
+            except:
+                new_context = f"\n\nThere was an error running your command, below. Be sure to conform to the given function signature.\n"
+                new_context += "`" + response_obj["command"]["action"] + "`"
+                if "args" in response_obj["command"]:
+                    new_context += " given args " + str(response_obj["command"]["args"])
+                if "kwargs" in response_obj["command"]:
+                    new_context += " given kwargs " + str(response_obj["command"]["kwargs"])
+                new_context += "\n"
+                self.context = new_context
+                logger.debug(new_context)
+                continue
+
+            self.actions_taken.append(processed["agent_response"])
             response_obj = processed["agent_response"]
             action_result = processed["action_result"]
             action = response_obj["command"]["action"]
 
             if action == DONE_FUNCTION:
-                print("You have completed your objective!")
+                logger.info("You have completed your objective!")
                 return

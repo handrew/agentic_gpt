@@ -21,3 +21,4 @@ if __name__ == "__main__":
         memory_dict=DOCUMENTS,
     )
     agent.run()
+    # agent.save_actions_taken("examples/memory_example_actions_taken.json")
