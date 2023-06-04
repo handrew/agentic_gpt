@@ -1,1 +1,1 @@
-from .goal_agent import GoalAgent
+from .agent_gpt import AgentGPT
