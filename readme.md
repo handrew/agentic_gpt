@@ -4,10 +4,11 @@ See [request for comment](motivation-rfc.md) for the original motivation for bui
 
 ## TODO
 
-- [ ] Memory instantiation and routing
-- [ ] Add "query memory" default function
-- [ ] Add "add to memory" function
-- [ ] Stack trace retrying
+- [x] Memory instantiation and routing
+- [x] Add "query memory" default function
+- [x] Add "add to memory" function
+- [x] Retry when there is an error
 - [ ] Save routine to file
 - [ ] Recursively modularize the context window
 - [ ] Write some docs, make some diagrams
+- [ ] Create and document examples
