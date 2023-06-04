@@ -1,3 +1,6 @@
+"""Example of using AgentGPT to make a folder on the filesystem.
+Also demonstrates how to ask the user for input and use it in the agent's
+thoughts."""
 import os
 from agent_gpt.agent import AgentGPT
 from agent_gpt.agent.action import Action
