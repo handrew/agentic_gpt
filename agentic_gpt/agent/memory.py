@@ -5,7 +5,7 @@ takes care of embedding the documents, indexing them, and retrieving
 them, as well as the bookkeeping of the documents.
 """
 from llama_index import Document
-from typing import DictDocument()
+from typing import Dict
 from .utils.indexing import init_index, summarize_documents
 
 
