@@ -94,7 +94,7 @@ TODO, add a diagram and explanation
 - [x] Create and document examples. Start setting up a library of actions.
 - [x] Support sentencetransformers and gpt-4.
 - [x] Don't make it incumbent on the user to make Actions return a context.
-- [ ] Figure out a more modular way to solicit the user for feedback, maybe a default `ask_user_to_clarify` hook.
+- [x] Figure out a more modular way to solicit the user for feedback, maybe a default `ask_user_to_clarify` hook.
 - [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
 - [ ] Make some diagrams describing the architecture.
 - [ ] Put on pypi.

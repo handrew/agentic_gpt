@@ -37,18 +37,6 @@ def declare_done():
     """Declare that you are done with your objective."""
 
 
-DEFAULT_ACTIONS = [
-    Action(
-        name="ask_user_to_clarify",
-        description="Ask the user to clarify their instructions. Used when the information in the context is not enough to proceed to the next step.",
-        function=ask_user_to_clarify,
-    ),
-    Action(
-        name=DONE_FUNCTION,
-        description="Declare that you are done with your objective.",
-        function=declare_done,
-    ),
-]
 
 """Prompt to be called at every time step for the agent."""
 
@@ -102,6 +90,7 @@ class AgenticGPT:
         memory_dict={},
         model="gpt-3.5-turbo",
         embedding_model="text-embedding-ada-002",
+        ask_user_fn=ask_user_to_clarify,
         max_steps=100,
         verbose=False,
     ):
@@ -124,6 +113,7 @@ class AgenticGPT:
         ), f"Model {model} not supported. Supported models are {SUPPORTED_LANGUAGE_MODELS}."
         self.model = model
         self.embedding_model = embedding_model
+        self.ask_user_fn = ask_user_fn
 
         # Set the variables given to the agent.
         self.objective = objective
@@ -161,7 +151,19 @@ class AgenticGPT:
             ),
         ]
 
-        default_actions = DEFAULT_ACTIONS + memory_actions
+        default_actions = [
+            Action(
+                name="ask_user_to_clarify",
+                description="Ask the user to clarify their instructions. Used when the information in the context is not enough to proceed to the next step.",
+                function=self.ask_user_fn,
+            ),
+            Action(
+                name=DONE_FUNCTION,
+                description="Declare that you are done with your objective.",
+                function=declare_done,
+            ),
+        ]
+        default_actions = default_actions + memory_actions
         self.actions_available = given_actions + default_actions
 
         # Check that the actions_available don't have name collisions with the
