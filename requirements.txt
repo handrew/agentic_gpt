@@ -1,3 +1,2 @@
 llama_index==0.6.19
 openai
-tqdm
