@@ -25,7 +25,7 @@ AgenticGPT(
 ```
 All you have to do is give it a string `objective`, define a list of `Action`s, and optionally give it a `memory_dict` of `name` to `text` for it to remember.
 
-See some [examples](examples/) folder.
+See some [examples](examples/).
 
 #### 🏃🏽 Creating actions and running
 
