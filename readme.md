@@ -6,6 +6,8 @@ The primary contributions I would like to make are twofold:
 1. Allowing an LLM to read from a corpus of information and act according to that information.
 2. Enabling more robust reproducibility and modularity.
 
+Conceptually, the user provides the `AgenticGPT` agent with an objective and a list of `Action`s that it can take, and then the agent figures out the rest, and asks the user for clarification when it needs help.
+
 ## 🎬 Getting Started
 ### 🔨 Installation
 1. `pip install -r requirements.txt`
@@ -20,12 +22,13 @@ AgenticGPT(
     memory_dict={},
     max_steps=100,
     model="gpt-3.5-turbo",
+    embedding_model=None,  # Defaults to text-embedding-ada-002, but can also use `sentencetransformers`
     verbose=False
 )
 ```
-All you have to do is give it a string `objective`, define a list of `Action`s, and optionally give it a `memory_dict` of `name` to `text` for it to remember.
+All you have to do is give it a string `objective`, define a list of `Action`s, and optionally give it a `memory_dict` of `name` to `text` for it to remember. The agent is equipped with a few `Action`s by default, such as being able to ask you for clarification if necessary, and a memory which it can query to help achieve its objectives.
 
-See some [examples](examples/).
+See some [examples](examples/). TODO: If you want to run the examples, you have to move them into the root folder and then run `python <example_file>.py`.
 
 #### 🏃🏽 Creating actions and running
 
@@ -55,7 +58,7 @@ agent = AgenticGPT(
 agent.run()
 ```
 
-`Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do.
+`Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do. `Action`s *must* return a dict in the form {"context": <context>}, and it will then load the answer into context.
 
 #### ♻️ Reusing saved routines
 You can then save the steps that the LLM generated using
@@ -89,8 +92,10 @@ TODO, add a diagram and explanation
 - [x] Save and load routine to file.
 - [x] Write some initial docs. Be sure to add emojis because people can't get enough emojis.
 - [x] Create and document examples. Start setting up a library of actions.
-- [x] Support sentencetransformers and gpt4.
-- [ ] Recursively modularize the context window in case it gets too long
+- [x] Support sentencetransformers and gpt-4.
+- [ ] Don't make it incumbent on the user to make Actions return a context. Just store the output in memory. 
+- [ ] Test Memory functions: adding a document, querying all, loading document.
+- [ ] Figure out a more modular way to solicit the user for feedback, maybe a default `ask_user_to_clarify` hook.
 - [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
 - [ ] Make some diagrams describing the architecture.
 - [ ] Put on pypi.

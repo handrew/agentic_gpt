@@ -2,8 +2,33 @@
 import time
 import openai
 
+OPENAI_MODELS = [
+    "gpt-3.5-turbo",
+    "gpt-4",
+]
+
+SUPPORTED_LANGUAGE_MODELS = OPENAI_MODELS
+
 
 def get_completion(
+    prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=1024, stop=["```"]    
+):
+    assert model in SUPPORTED_LANGUAGE_MODELS, f"Model {model} not supported. Supported models: {SUPPORTED_LANGUAGE_MODELS}"
+
+    if model in OPENAI_MODELS:
+        try:
+            return openai_call(
+                prompt,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stop=stop,
+            )
+        except openai.error.InvalidRequestError as exc:
+            return {"error": str(exc)}
+
+
+def openai_call(
     prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=1024, stop=["```"]
 ):
     """Wrapper over OpenAI's completion API."""
