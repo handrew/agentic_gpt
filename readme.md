@@ -89,9 +89,10 @@ TODO, add a diagram and explanation
 - [x] Save and load routine to file.
 - [x] Write some initial docs. Be sure to add emojis because people can't get enough emojis.
 - [x] Create and document examples. Start setting up a library of actions.
-- [ ] Make some diagrams describing the architecture.
-- [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
+- [x] Support sentencetransformers and gpt4.
 - [ ] Recursively modularize the context window in case it gets too long
+- [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
+- [ ] Make some diagrams describing the architecture.
 - [ ] Put on pypi.
 
 ## 🚨 Disclaimer

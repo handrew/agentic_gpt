@@ -25,7 +25,7 @@ class Memory:
         self.documents = documents
         if documents:
             llama_docs = [Document(text) for name, text in documents.items()]
-            summary_obj = summarize_documents(llama_docs)
+            summary_obj = summarize_documents(llama_docs, model=self.model, embedding_model=self.embedding_model)
             self.summaries = summary_obj["summaries"]
             self.doc_indexes = summary_obj["indexes"]
             self.router_index = init_index(
