@@ -102,13 +102,16 @@ class AgenticGPT:
         """Initialize the agent. An agent is given the following args:
         @param objective: The objective of the agent.
         @param actions_available: a list of `Action`s which it can use to achieve the objective
-        @param memory_dir: a directory of documents which it loads into its `Memory`
+        @param memory_dict: a dict of name => documents which it loads into its `Memory`
+        @param model: a string that specifies the language model to use
+        @param embedding_model: a string that specifies the embedding model to use
         @param max_steps: an integer that specifies the maximum number of steps the agent can take
         @param verbose: a boolean that specifies whether to print out the prompt at every step
 
         The agent then maintains:
         - a list of actions that it has taken so far
-        - a `memory_dict` which it uses to keep track of the files it has in its memory
+        - a `Memory` which it uses to keep track of the files it has in its memory
+        - a context which it can use to keep track of the environment it is in
         """
         assert (
             model in SUPPORTED_LANGUAGE_MODELS
