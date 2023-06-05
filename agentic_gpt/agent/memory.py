@@ -12,7 +12,7 @@ from .utils.indexing import init_index, summarize_documents
 class Memory:
     """Initialize the memory with `documents`, a list of strings."""
 
-    def __init__(self, documents: Dict[str, str] = {}):
+    def __init__(self, documents: Dict[str, str] = {}, model="gpt-3.5-turbo", embedding_model=None):
         """A Memory object is initialized with a list of documents.
         It keeps track of a few things about the documents:
         - `self.documents`: The documents themselves, stored in `name`: `text` pairs.
@@ -20,6 +20,8 @@ class Memory:
         - `self.doc_indexes`: The indexes of the documents.
         - `self.router_index`: A router index over the summaries.
         """
+        self.model = model
+        self.embedding_model = embedding_model
         self.documents = documents
         if documents:
             llama_docs = [Document(text) for name, text in documents.items()]
@@ -27,7 +29,9 @@ class Memory:
             self.summaries = summary_obj["summaries"]
             self.doc_indexes = summary_obj["indexes"]
             self.router_index = init_index(
-                [Document(summary) for summary in self.summaries]
+                [Document(summary) for summary in self.summaries],
+                model=self.model,
+                embedding_model=self.embedding_model,
             )
         else:
             self.summaries = []

@@ -9,7 +9,8 @@ from .utils.openai import get_completion
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SUPPORTED_MODELS = ["gpt-3.5-turbo", "gpt-4"]
+SUPPORTED_LANGUAGE_MODELS = ["gpt-3.5-turbo", "gpt-4"]
+SUPPORTED_EMBEDDING_MODELS = ["text-embedding-ada-002", "sentencetransformers"]
 
 """Define default actions for the agent."""
 
@@ -94,6 +95,7 @@ class AgenticGPT:
         actions_available=[],
         memory_dict={},
         model="gpt-3.5-turbo",
+        embedding_model="text-embedding-ada-002",
         max_steps=100,
         verbose=False,
     ):
@@ -109,15 +111,16 @@ class AgenticGPT:
         - a `memory_dict` which it uses to keep track of the files it has in its memory
         """
         assert (
-            model in SUPPORTED_MODELS
-        ), f"Model {model} not supported. Supported models are {SUPPORTED_MODELS}."
+            model in SUPPORTED_LANGUAGE_MODELS
+        ), f"Model {model} not supported. Supported models are {SUPPORTED_LANGUAGE_MODELS}."
         self.model = model
+        self.embedding_model = embedding_model
 
         # Set the variables given to the agent.
         self.objective = objective
         self.max_steps = max_steps
         self.verbose = verbose
-        self.memory = Memory(memory_dict)
+        self.memory = Memory(memory_dict, embedding_model=self.embedding_model)
         self.actions_available = self.__init_actions_available(actions_available)
 
         self.actions_taken = []
