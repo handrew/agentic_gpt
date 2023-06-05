@@ -1,5 +1,11 @@
 # 🪽 AgenticGPT
 
+Nascent AGI architectures like BabyAGI and AutoGPT have captured a great deal of public interest by demonstrating LLMs' agentic capabilities and capacity for introspective step-by-step reasoning. As proofs-of-concept, they make great strides, but a few things wanting.
+
+The primary contributions I would like to make are twofold:
+1. Allowing an LLM to read from a corpus of information and act according to that information.
+2. Enabling more robust reproducibility and modularity.
+
 ## 🎬 Getting Started
 ### 🔨 Installation
 1. `pip install -r requirements.txt`
@@ -73,18 +79,20 @@ agent.replay()
 
 See [request for comment](docs/motivation-rfc.md) for the original motivation for and considerations around building this.
 
+TODO, add a diagram and explanation
+
 ## 🚧 TODO
 
-- [x] Memory instantiation and routing
-- [x] Add "query memory" default function
-- [x] Add "add to memory" function
-- [x] Retry when there is an error
-- [x] Save and load routine to file
-- [x] Write some initial docs. Be sure to add emojis because people can't get enough emojis
-- [ ] Make some diagrams describing the architecture
-- [ ] Create and document examples. Start setting up a library of actions.
-- [ ] Create chatbot mode where it stops after every step and asks you how it's doing
+- [x] Memory instantiation and routing of queries.
+- [x] Add "query memory" and "add to memory" default functions.
+- [x] Retry when there is an error.
+- [x] Save and load routine to file.
+- [x] Write some initial docs. Be sure to add emojis because people can't get enough emojis.
+- [x] Create and document examples. Start setting up a library of actions.
+- [ ] Make some diagrams describing the architecture.
+- [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
 - [ ] Recursively modularize the context window in case it gets too long
+- [ ] Put on pypi.
 
 ## 🚨 Disclaimer
 

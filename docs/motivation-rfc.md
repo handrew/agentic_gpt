@@ -1,6 +1,6 @@
 # Request for Comment
 
-Nascent AGI architectures like BabyAGI and AutoGPT have captured a great deal of public interest by demonstrating LLMs' agentic capabilities and capacity for introspective step-by-step reasoning. As proofs-of-concept, they make great strides, but leave a good deal wanting. This document is an attempt to sketch an architecture which builds upon and extends the conceptual foundations of the aforementioned products.
+Nascent AGI architectures like BabyAGI and AutoGPT have captured a great deal of public interest by demonstrating LLMs' agentic capabilities and capacity for introspective step-by-step reasoning. As proofs-of-concept, they make great strides, but leave a few things wanting. This document is an attempt to sketch an architecture which builds upon and extends the conceptual foundations of the aforementioned products.
 
 The primary contributions I would like to make are twofold:
 1. Allowing an LLM to read from a corpus of information and write text according to that information.
