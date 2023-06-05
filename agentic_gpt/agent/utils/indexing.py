@@ -1,7 +1,7 @@
 """Helper functions for Llama Index."""
 from llama_index import GPTVectorStoreIndex, GPTListIndex
 from llama_index import ServiceContext, LLMPredictor
-from llama_index import LangchainEmbedding
+from llama_index import LangchainEmbedding, Document
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 
@@ -24,7 +24,7 @@ def init_index(docs, model="gpt-3.5-turbo", embedding_model=None, index_type="ve
         service_context = ServiceContext.from_defaults(
             llm_predictor=llm,
             embed_model=embed_model,
-        )               
+        )
 
     if index_type == "vector":
         index = GPTVectorStoreIndex.from_documents(
@@ -34,6 +34,15 @@ def init_index(docs, model="gpt-3.5-turbo", embedding_model=None, index_type="ve
         index = GPTListIndex.from_documents(docs, service_context=service_context)
 
     return index
+
+
+def retrieve_segment_of_text(query, text, model=None, embedding_model=None):
+    """Retrieves a segment of text given a query and a text."""
+    index = init_index([Document(text)], model=model, embedding_model=embedding_model)
+    query_engine = index.as_query_engine()
+    response = query_engine.query(query)
+    source = response.source_nodes[0].node.text
+    return source
 
 
 def summarize_documents(docs, model=None, embedding_model=None):
@@ -46,7 +55,9 @@ def summarize_documents(docs, model=None, embedding_model=None):
     summaries = []
     indexes = []
     for doc in docs:
-        index = init_index([doc], index_type="vector", model=model, embedding_model=embedding_model)
+        index = init_index(
+            [doc], index_type="vector", model=model, embedding_model=embedding_model
+        )
         query_engine = index.as_query_engine(response_mode="tree_summarize")
         response = query_engine.query("Summarize in a few sentences: ")
         summaries.append(response.response)

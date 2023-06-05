@@ -11,9 +11,11 @@ SUPPORTED_LANGUAGE_MODELS = OPENAI_MODELS
 
 
 def get_completion(
-    prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=1024, stop=["```"]    
+    prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=1024, stop=["```"]
 ):
-    assert model in SUPPORTED_LANGUAGE_MODELS, f"Model {model} not supported. Supported models: {SUPPORTED_LANGUAGE_MODELS}"
+    assert (
+        model in SUPPORTED_LANGUAGE_MODELS
+    ), f"Model {model} not supported. Supported models: {SUPPORTED_LANGUAGE_MODELS}"
 
     if model in OPENAI_MODELS:
         try:

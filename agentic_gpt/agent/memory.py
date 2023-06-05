@@ -6,13 +6,18 @@ them, as well as the bookkeeping of the documents.
 """
 from llama_index import Document
 from typing import Dict
-from .utils.indexing import init_index, summarize_documents
+from .utils.indexing import init_index, summarize_documents, retrieve_segment_of_text
 
 
 class Memory:
     """Initialize the memory with `documents`, a list of strings."""
 
-    def __init__(self, documents: Dict[str, str] = {}, model="gpt-3.5-turbo", embedding_model=None):
+    def __init__(
+        self,
+        documents: Dict[str, str] = {},
+        model="gpt-3.5-turbo",
+        embedding_model=None,
+    ):
         """A Memory object is initialized with a list of documents.
         It keeps track of a few things about the documents:
         - `self.documents`: The documents themselves, stored in `name`: `text` pairs.
@@ -26,11 +31,15 @@ class Memory:
             name_and_text = [(name, text) for name, text in documents.items()]
 
             llama_docs = [Document(text) for name, text in name_and_text]
-            summary_obj = summarize_documents(llama_docs, model=self.model, embedding_model=self.embedding_model)
+            summary_obj = summarize_documents(
+                llama_docs, model=self.model, embedding_model=self.embedding_model
+            )
 
             self.document_store = {
                 name: {"text": text, "summary": summary, "index": index}
-                for (name, text), summary, index in zip(name_and_text, summary_obj["summaries"], summary_obj["indexes"])
+                for (name, text), summary, index in zip(
+                    name_and_text, summary_obj["summaries"], summary_obj["indexes"]
+                )
             }
             self.router_index = init_index(
                 [Document(text) for text in documents.values()],
@@ -56,20 +65,22 @@ class Memory:
         ...
         """
         prompt = ""
-        summaries = [(name, self.document_store[name]["summary"]) for name in self.documents.keys()]
+        summaries = [
+            (name, self.document_store[name]["summary"])
+            for name in self.documents.keys()
+        ]
         for name, summary in summaries:
             prompt += f"- {name}:\n"
             prompt += f"    Summary: {summary}\n"
         return prompt
-    
+
     def get_document(self, name, query="Return the text verbatim.", max_length=5000):
         """Return a document's text verbatim."""
         text = self.documents[name]
         if len(text) > max_length:
-            # Find the index of the `name` in the list of documents.
-            index = list(self.documents.keys()).index(name)
-            response = index.as_query_engine().query(query)
-            return response.response
+            return retrieve_segment_of_text(
+                query, text, model=self.model, embedding_model=self.embedding_model
+            )
         return text
 
     def add_document(self, name: str, document: str):
@@ -79,7 +90,11 @@ class Memory:
         summary_obj = summarize_documents([llama_doc])
         summary = summary_obj["summaries"][0]
         index = summary_obj["indexes"][0]
-        self.document_store[name] = {"text": document, "summary": summary, "index": index}
+        self.document_store[name] = {
+            "text": document,
+            "summary": summary,
+            "index": index,
+        }
         self.router_index.insert(Document(document))
 
     def query_all(self, query):

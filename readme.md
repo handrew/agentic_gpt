@@ -58,7 +58,7 @@ agent = AgenticGPT(
 agent.run()
 ```
 
-`Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do. `Action`s *must* return a dict in the form {"context": <context>}, and it will then load the answer into context.
+`Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do. `Action` results are stored in context, unless a dict answer is given with `{"context": }` which sets the context accordingly.
 
 #### ♻️ Reusing saved routines
 You can then save the steps that the LLM generated using
@@ -93,12 +93,12 @@ TODO, add a diagram and explanation
 - [x] Write some initial docs. Be sure to add emojis because people can't get enough emojis.
 - [x] Create and document examples. Start setting up a library of actions.
 - [x] Support sentencetransformers and gpt-4.
-- [ ] Don't make it incumbent on the user to make Actions return a context. Just store the output in memory. 
-- [ ] Test Memory functions: adding a document, querying all, loading document.
+- [x] Don't make it incumbent on the user to make Actions return a context.
 - [ ] Figure out a more modular way to solicit the user for feedback, maybe a default `ask_user_to_clarify` hook.
 - [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
 - [ ] Make some diagrams describing the architecture.
 - [ ] Put on pypi.
+- [ ] Test Memory functions: adding a document, querying all, loading document.
 
 ## 🚨 Disclaimer
 

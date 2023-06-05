@@ -3,9 +3,9 @@ import json
 import logging
 from typing import Dict
 from .action import Action
-from .memory import Memory
+from .memory import Memory, Document
 from .utils.llm_providers import SUPPORTED_LANGUAGE_MODELS, get_completion
-from .utils.indexing import init_index
+from .utils.indexing import init_index, retrieve_segment_of_text
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,10 +16,7 @@ SUPPORTED_EMBEDDING_MODELS = ["text-embedding-ada-002", "sentencetransformers"]
 # to that, so we just use a heuristic. Note that this does not mean the context
 # window of the model, but the context given to the agent in the context section
 # of the prompt.
-MAXIMUM_CONTEXT_LENGTH = {
-    "gpt-3.5-turbo": 5000,
-    "gpt-4": 5000 * 10
-}
+MAXIMUM_CONTEXT_LENGTH = {"gpt-3.5-turbo": 5000, "gpt-4": 5000 * 10}
 
 """Define default actions for the agent."""
 
@@ -161,7 +158,7 @@ class AgenticGPT:
                 name="load_document_from_memory",
                 description="Load a document verbatim from the Memory into `context`.",
                 function=self.__load_document_from_memory_into_context,
-            )
+            ),
         ]
 
         default_actions = DEFAULT_ACTIONS + memory_actions
@@ -187,9 +184,7 @@ class AgenticGPT:
     def __get_actions_taken(self) -> str:
         """Get a string to inject into the prompt telling the agent what
         actions it has taken so far."""
-        actions = "\n".join(
-            ["- " + str(action) for action in self.actions_taken]
-        )
+        actions = "\n".join(["- " + str(action) for action in self.actions_taken])
         if actions.strip():
             return actions
         else:
@@ -199,17 +194,35 @@ class AgenticGPT:
         """Get a string to inject into the prompt telling the agent what
         files it has in its memory."""
         return self.memory.to_prompt_string()
-    
+
     def __load_document_from_memory_into_context(self, document_name: str):
         """Load a document from the Memory into the context."""
         max_length = MAXIMUM_CONTEXT_LENGTH[self.model]
-        query = "Find the part of the document which most helps me with objective: " + self.objective
-        doc_text = self.memory.get_document(document_name, query=query, max_length=max_length)
+        query = (
+            "Find the part of the document which most helps me with objective: "
+            + self.objective
+        )
+        doc_text = self.memory.get_document(
+            document_name, query=query, max_length=max_length
+        )
         return {"context": doc_text}
 
     def __get_context(self) -> str:
         """Get a string to inject into the prompt telling the agent what
         the state of the world is."""
+        max_length = MAXIMUM_CONTEXT_LENGTH[self.model]
+        if len(self.context) > max_length:
+            query = (
+                "Find the part of the context which most helps me with objective: "
+                + self.objective
+            )
+            source = retrieve_segment_of_text(
+                query,
+                self.context,
+                model=self.model,
+                embedding_model=self.embedding_model,
+            )
+            return source
         return self.context
 
     def from_saved_actions(self, path: str):
@@ -247,7 +260,7 @@ class AgenticGPT:
         action_args = []
         if "args" in response_obj["command"]:
             action_args = response_obj["command"]["args"]
-        
+
         action_kwargs = {}
         if "kwargs" in response_obj["command"]:
             action_kwargs = response_obj["command"]["kwargs"]
@@ -262,6 +275,9 @@ class AgenticGPT:
                 action_result = action.execute(*action_args, **action_kwargs)
                 if isinstance(action_result, dict) and "context" in action_result:
                     self.context = action_result["context"]
+                else:
+                    self.context += "Command: " + chosen_action + " executed."
+                    self.context += "\nResult: " + str(action_result)
                 break
 
         return {"agent_response": response_obj, "action_result": action_result}
