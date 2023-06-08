@@ -20,10 +20,11 @@ AgenticGPT(
     objective,
     actions_available=[],
     memory_dict={},
-    max_steps=100,
     model="gpt-3.5-turbo",
-    embedding_model=None,  # Defaults to text-embedding-ada-002, but can also use `sentencetransformers`
-    verbose=False
+    embedding_model="text-embedding-ada-002",
+    ask_user_fn=ask_user_to_clarify,
+    max_steps=100,
+    verbose=False,
 )
 ```
 All you have to do is give it a string `objective`, define a list of `Action`s, and optionally give it a `memory_dict` of `name` to `text` for it to remember. The agent is equipped with a few `Action`s by default, such as being able to ask you for clarification if necessary, and a memory which it can query to help achieve its objectives.

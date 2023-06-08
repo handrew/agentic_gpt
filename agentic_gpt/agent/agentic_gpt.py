@@ -26,7 +26,7 @@ CLARIFY_FUNCTION = "ask_user_to_clarify"
 def ask_user_to_clarify(question: str) -> str:
     """Ask the user a question and return their answer."""
     user_response = input(question + " ")
-    context = f"- Asked the question: {question}... Received response: {user_response}"
+    context = f"- Asked the question: \"{question}\"... Received response: \"{user_response}\""
     return {"context": context}
 
 
@@ -100,6 +100,7 @@ class AgenticGPT:
         @param memory_dict: a dict of name => documents which it loads into its `Memory`
         @param model: a string that specifies the language model to use
         @param embedding_model: a string that specifies the embedding model to use
+        @param ask_user_fn: a function that asks the user a question and returns their answer
         @param max_steps: an integer that specifies the maximum number of steps the agent can take
         @param verbose: a boolean that specifies whether to print out the prompt at every step
 
@@ -114,6 +115,7 @@ class AgenticGPT:
         self.model = model
         self.embedding_model = embedding_model
         self.ask_user_fn = ask_user_fn
+        # self.chat_mode = chat_mode
 
         # Set the variables given to the agent.
         self.objective = objective
@@ -308,7 +310,15 @@ class AgenticGPT:
             try:
                 response_obj = json.loads(completion)
             except json.decoder.JSONDecodeError:
+                logger.info("Invalid JSON response. Trying again")
                 continue
+        
+            # TODO eventually figure this out
+            # if self.chat_mode:
+            #     message = "My thoughts are that: " + response_obj["thoughts"]["text"]
+            #     message += "\nMy reasoning is: " + response_obj["reasoning"]["reasoning"]
+            #     message += "\nDo you think this is right?"
+            #     self.ask_user_fn(message)
 
             try:
                 processed = self.process_response(response_obj)
