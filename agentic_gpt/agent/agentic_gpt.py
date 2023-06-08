@@ -5,7 +5,7 @@ from typing import Dict
 from .action import Action
 from .memory import Memory, Document
 from .utils.llm_providers import SUPPORTED_LANGUAGE_MODELS, get_completion
-from .utils.indexing import init_index, retrieve_segment_of_text
+from .utils.indexing import retrieve_segment_of_text
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ Here is some potentially helpful context about your environment:
 {context}
 
 =============================================================
-What is your next action? Answer with a JSON with the below form which can be loaded with Python `json.loads`. Example:
+What is your next action? Please only choose ONE action at a time. Answer with a JSON with the below form which can be loaded with Python `json.loads`. Example:
 {example_response_format}
 
 """
@@ -216,6 +216,7 @@ class AgenticGPT:
         the state of the world is."""
         max_length = MAXIMUM_CONTEXT_LENGTH[self.model]
         if len(self.context) > max_length:
+            logger.info("Context too long. Truncating.")
             query = (
                 "Find the part of the context which most helps me with objective: "
                 + self.objective
@@ -280,7 +281,7 @@ class AgenticGPT:
                 if isinstance(action_result, dict) and "context" in action_result:
                     self.context = action_result["context"]
                 else:
-                    self.context += "Command: " + chosen_action + " executed."
+                    self.context += "\n\nCommand: " + chosen_action + " executed."
                     self.context += "\nResult: " + str(action_result)
                 break
 
@@ -310,8 +311,13 @@ class AgenticGPT:
             try:
                 response_obj = json.loads(completion)
             except json.decoder.JSONDecodeError:
-                logger.info("Invalid JSON response. Trying again")
-                continue
+                logger.info(completion)
+                print(prompt)
+                logger.info("Invalid JSON response. Prompt shown above, completion below.")
+                print(completion)
+                import sys
+                sys.exit(1)
+                # continue
         
             # TODO eventually figure this out
             # if self.chat_mode:
