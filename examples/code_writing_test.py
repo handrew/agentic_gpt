@@ -1,6 +1,4 @@
-"""Example of using AgenticGPT to make a folder on the filesystem.
-Also demonstrates how to ask the user for input and use it in the agent's
-thoughts."""
+"""Example of using AgenticGPT to write some code."""
 from agentic_gpt import AgenticGPT
 from agentic_gpt import Action
 from agentic_gpt.actions.requests import get as http_get
