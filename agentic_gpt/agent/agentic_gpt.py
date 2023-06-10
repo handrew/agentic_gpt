@@ -40,7 +40,7 @@ def declare_done():
 
 """Prompt to be called at every time step for the agent."""
 
-AGENT_PROMPT = """You are an agent given the following objective: "{objective}"
+AGENT_PROMPT = """You are an AI agent given the following objective: "{objective}"
 
 =============================================================
 You can take the following actions. args are denoted as (arg1: str, arg2: int), and kwargs are denoted as (kwarg1="default_value").
@@ -70,7 +70,7 @@ EXAMPLE_RESPONSE_FORMAT = """
         "text": "<your thought>",
         "reasoning": "<your reasoning>"
     },
-    command: {
+    "command": {
         "action": "selected_action_name",
         "args": ["arg1", "arg2"],
         "kwargs": {
