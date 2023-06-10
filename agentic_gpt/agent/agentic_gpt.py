@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Dict
 from .action import Action
+from ..actions.ai_functions import ask_llm
 from .memory import Memory, Document
 from .utils.llm_providers import SUPPORTED_LANGUAGE_MODELS, get_completion
 from .utils.indexing import retrieve_segment_of_text
@@ -36,6 +37,8 @@ DONE_FUNCTION = "declare_done"
 def declare_done():
     """Declare that you are done with your objective."""
 
+
+ASK_LLM_FUNCTION = "ask_ai"
 
 
 """Prompt to be called at every time step for the agent."""
@@ -79,6 +82,8 @@ EXAMPLE_RESPONSE_FORMAT = """
         }
     }
 }
+
+Be mindful of stray commas!
 """
 
 
@@ -164,6 +169,11 @@ class AgenticGPT:
                 description="Declare that you are done with your objective.",
                 function=declare_done,
             ),
+            Action(
+                name=ASK_LLM_FUNCTION,
+                description="Given a prompt, submit to a language model and return its answer. For instance, \"write me a poem about a squirrel\" would return a string response with a poem about a squirrel.",
+                function=ask_llm,
+            )
         ]
         default_actions = default_actions + memory_actions
         self.actions_available = given_actions + default_actions
@@ -310,11 +320,15 @@ class AgenticGPT:
 
             try:
                 response_obj = json.loads(completion)
-            except json.decoder.JSONDecodeError:
+            except json.decoder.JSONDecodeError as exc:
                 logger.info(completion)
                 print(prompt)
                 logger.info("Invalid JSON response. Prompt shown above, completion below.")
                 print(completion)
+                self.context = self.context + "\nYou gave the answer: " + completion
+                self.context = self.context + "\nIt threw an error: " + str(exc)
+                self.context = self.context + "\nPlease try again."
+                import pdb; pdb.set_trace()
                 import sys
                 sys.exit(1)
                 # continue
