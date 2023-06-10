@@ -7,36 +7,36 @@ import os
 def get_file_contents(filename):
     """Reads file into memory."""
     with open(filename, "r") as f:
-        return {"context": f.read()}
+        return f.read() 
 
 
 def list_dir(path):
     """Lists the contents of a directory."""
-    return {"context": os.listdir(path)}
+    return os.listdir(path)
 
 
 def mkdir(path):
     """Creates a directory."""
     os.mkdir(path)
-    return {"context": "Created directory: {}".format(path)}
+    return "Created directory: {}".format(path)
 
 
 def touch(path):
     """Creates a file."""
     with open(path, "w") as f:
         f.write("")
-    return {"context": "Created file: {}".format(path)}
+    return "Created file: {}".format(path)
 
 
 def write(path, contents):
     """Writes to a file."""
     with open(path, "w") as f:
         f.write(contents)
-    return {"context": "Wrote to file: {}".format(path)}
+    return "Wrote to file: {}".format(path)
 
 
 def append(path, contents):
     """Appends to a file."""
     with open(path, "a") as f:
         f.write(contents)
-    return {"context": "Appended to file: {}".format(path)}
+    return"Appended to file: {}".format(path)
