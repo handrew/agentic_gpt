@@ -43,7 +43,7 @@ def declare_done():
 AGENT_PROMPT = """You are an agent given the following objective: "{objective}"
 
 =============================================================
-You can take the following actions. args are denoted as (arg1: str, arg2: int), and kwargs are denoted as (kwarg1="default_value").):
+You can take the following actions. args are denoted as (arg1: str, arg2: int), and kwargs are denoted as (kwarg1="default_value").
 {actions}
 
 =============================================================
@@ -138,12 +138,12 @@ class AgenticGPT:
             ),
             Action(
                 name="query_all_documents_in_memory",
-                description="Query the Memory to synthesize an answer from all documents.",
+                description="Query the Memory to synthesize an answer from all documents. Useful for summarization and retrieval using information from all docs.",
                 function=self.memory.query_all,
             ),
             Action(
                 name="query_one_document_in_memory",
-                description="Query the Memory to synthesize an answer from one document.",
+                description="Query the Memory to synthesize an answer from one document. Useful for summarization and retrieval using information from a single doc.",
                 function=self.memory.query_one,
             ),
             Action(
