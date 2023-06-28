@@ -13,11 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 SUPPORTED_EMBEDDING_MODELS = ["text-embedding-ada-002", "sentencetransformers"]
-# This obviously should depend on the tokenizer used but we don't have access
-# to that, so we just use a heuristic. Note that this does not mean the context
-# window of the model, but the context given to the agent in the context section
-# of the prompt.
-MAXIMUM_CONTEXT_LENGTH = {"gpt-3.5-turbo": 5000, "gpt-4": 5000 * 10}
 
 """Define default actions for the agent."""
 
@@ -114,9 +109,10 @@ class AgenticGPT:
         - a `Memory` which it uses to keep track of the files it has in its memory
         - a context which it can use to keep track of the environment it is in
         """
+        supported_models = list(SUPPORTED_LANGUAGE_MODELS.keys())
         assert (
-            model in SUPPORTED_LANGUAGE_MODELS
-        ), f"Model {model} not supported. Supported models are {SUPPORTED_LANGUAGE_MODELS}."
+            model in supported_models
+        ), f"Model {model} not supported. Supported models are {supported_models}."
         self.model = model
         self.embedding_model = embedding_model
         self.ask_user_fn = ask_user_fn
@@ -211,7 +207,7 @@ class AgenticGPT:
 
     def __load_document_from_memory_into_context(self, document_name: str):
         """Load a document from the Memory into the context."""
-        max_length = MAXIMUM_CONTEXT_LENGTH[self.model]
+        max_length = SUPPORTED_LANGUAGE_MODELS[self.model]["max_length"]
         query = (
             "Find the part of the document which most helps me with objective: "
             + self.objective
@@ -224,7 +220,7 @@ class AgenticGPT:
     def __get_context(self) -> str:
         """Get a string to inject into the prompt telling the agent what
         the state of the world is."""
-        max_length = MAXIMUM_CONTEXT_LENGTH[self.model]
+        max_length = SUPPORTED_LANGUAGE_MODELS[self.model]["max_length"]
         if len(self.context) > max_length:
             logger.info("Context too long. Truncating.")
             query = (

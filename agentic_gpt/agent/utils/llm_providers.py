@@ -2,10 +2,21 @@
 import time
 import openai
 
-OPENAI_MODELS = [
-    "gpt-3.5-turbo",
-    "gpt-4",
-]
+# This obviously should depend on the tokenizer used but we don't have access
+# to that, so we just use a heuristic. Note that this does not mean the context
+# window of the model, but the context given to the agent in the context section
+# of the prompt.
+OPENAI_MODELS = {
+    "gpt-3.5-turbo": {
+        "max_length": 5000,
+    },
+    "gpt-3.5-turbo-16k": {
+        "max_length": 5000 * 10 * 2,
+    },
+    "gpt-4": {
+        "max_length": 5000 * 10,
+    },
+}
 
 SUPPORTED_LANGUAGE_MODELS = OPENAI_MODELS
 
@@ -13,9 +24,10 @@ SUPPORTED_LANGUAGE_MODELS = OPENAI_MODELS
 def get_completion(
     prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=1024, stop=["```"]
 ):
+    supported_models = list(SUPPORTED_LANGUAGE_MODELS.keys())
     assert (
-        model in SUPPORTED_LANGUAGE_MODELS
-    ), f"Model {model} not supported. Supported models: {SUPPORTED_LANGUAGE_MODELS}"
+        model in supported_models
+    ), f"Model {model} not supported. Supported models: {supported_models}"
 
     if model in OPENAI_MODELS:
         try:
