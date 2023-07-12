@@ -30,7 +30,7 @@ class Memory:
         if documents:
             name_and_text = [(name, text) for name, text in documents.items()]
 
-            llama_docs = [Document(text) for name, text in name_and_text]
+            llama_docs = [Document(text=text) for name, text in name_and_text]
             summary_obj = summarize_documents(
                 llama_docs, model=self.model, embedding_model=self.embedding_model
             )
@@ -42,7 +42,7 @@ class Memory:
                 )
             }
             self.router_index = init_index(
-                [Document(text) for text in documents.values()],
+                [Document(text=text) for text in documents.values()],
                 model=self.model,
                 embedding_model=self.embedding_model,
             )
@@ -86,7 +86,7 @@ class Memory:
     def add_document(self, name: str, document: str):
         """Add a document to the memory."""
         self.documents[name] = document
-        llama_doc = Document(document)
+        llama_doc = Document(text=document)
         summary_obj = summarize_documents([llama_doc])
         summary = summary_obj["summaries"][0]
         index = summary_obj["indexes"][0]
@@ -95,7 +95,7 @@ class Memory:
             "summary": summary,
             "index": index,
         }
-        self.router_index.insert(Document(document))
+        self.router_index.insert(Document(text=document))
 
     def query_all(self, query):
         """Query and get a response synthesized from all of the docs."""

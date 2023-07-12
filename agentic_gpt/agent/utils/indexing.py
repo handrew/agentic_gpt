@@ -38,7 +38,7 @@ def init_index(docs, model="gpt-3.5-turbo", embedding_model=None, index_type="ve
 
 def retrieve_segment_of_text(query, text, model=None, embedding_model=None):
     """Retrieves a segment of text given a query and a text."""
-    index = init_index([Document(text)], model=model, embedding_model=embedding_model)
+    index = init_index([Document(text=text)], model=model, embedding_model=embedding_model)
     query_engine = index.as_query_engine()
     response = query_engine.query(query)
     source = response.source_nodes[0].node.text
