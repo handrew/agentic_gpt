@@ -99,7 +99,7 @@ I took some notes while building this project to document some of my [thoughts o
 - [x] Support sentencetransformers and gpt-4.
 - [x] Don't make it incumbent on the user to make Actions return a context.
 - [x] Figure out a more modular way to solicit the user for feedback, maybe a default `ask_user_to_clarify` hook.
-- [ ] Retry when there is an error.
+- [x] Retry when there is an error.
 - [ ] Create logic to condense context window if you get an error from the API.
 - [ ] Create chatbot mode where it stops after every step and asks you how it's doing.
 - [ ] Make some diagrams describing the architecture.

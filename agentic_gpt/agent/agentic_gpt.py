@@ -5,10 +5,11 @@ import logging
 import jinja2
 from typing import Dict
 from .action import Action
-from ..actions.ai_functions import ask_llm
-from .memory import Memory, Document
+from .memory import Memory
+from .errors import AgentError
 from .utils.llm_providers import SUPPORTED_LANGUAGE_MODELS, get_completion
 from .utils.indexing import retrieve_segment_of_text
+from ..actions.ai_functions import ask_llm
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -279,7 +280,7 @@ class AgenticGPT:
         result = template.render(self.memory.documents)
         if result != variable_string:  # Probably a dumb way to check...
             if not result:
-                raise ValueError(f"{variable_string} is not a valid file in memory. Please try again.")
+                raise AgentError(f"{variable_string} is not a valid file in memory. Please try again.")
             # If it's not the same, then we know that it was templated, and
             # can consequently "eval" the result.
             result = eval(result)
@@ -338,6 +339,7 @@ class AgenticGPT:
         action = None
         steps = 0
         while action is not DONE_FUNCTION and steps < self.max_steps:
+            # Format the prompt and get a completion
             prompt = AGENT_PROMPT.format(
                 objective=self.objective,
                 actions=self.__get_available_actions(),
@@ -349,20 +351,17 @@ class AgenticGPT:
             completion = get_completion(prompt, model=self.model)
             steps += 1
 
+            # Try loading the completion as JSON.
             try:
                 response_obj = json.loads(completion)
             except json.decoder.JSONDecodeError as exc:
-                logger.info(completion)
-                logger.info(prompt)
-                logger.info("Invalid JSON response. Prompt shown above, completion below.")
+                logger.debug(prompt)
+                logger.debug("Invalid JSON response. Prompt shown above, completion below.")
+                logger.debug(completion)
+                # Construct new context with error message.
                 self.context = self.context + "\nYou gave the answer: " + completion
-                self.context = self.context + "\nIt threw an error: " + str(exc)
+                self.context = self.context + "\nCould not decode answer as JSON: " + str(exc)
                 self.context = self.context + "\nPlease try again."
-                import pdb
-
-                pdb.set_trace()
-                sys.exit(1)
-                # continue
 
             # TODO eventually figure this out
             # if self.chat_mode:
@@ -371,26 +370,28 @@ class AgenticGPT:
             #     message += "\nDo you think this is right?"
             #     self.ask_user_fn(message)
 
-            processed = self.process_response(response_obj)
-            # try:
-            #     processed = self.process_response(response_obj)
-            # except Exception as exc:
-            #     new_context = f"\n\nThere was an error running your command, below. Be sure to conform to the given function signature.\n"
-            #     new_context += "`" + response_obj["command"]["action"] + "`"
-            #     import pdb; pdb.set_trace()
-            #     if "args" in response_obj["command"]:
-            #         new_context += " given args " + str(response_obj["command"]["args"])
-            #     if "kwargs" in response_obj["command"]:
-            #         new_context += " given kwargs " + str(
-            #             response_obj["command"]["kwargs"]
-            #         )
-            #     new_context += "\n"
-            #     self.context = new_context
-            #     logger.debug(new_context)
-            #     continue
+            # Process and execute the response.
+            try:
+                processed = self.process_response(response_obj)
+            except AgentError as exc:
+                # Construct new context with error message.
+                new_context = f"\nRan "
+                new_context += "`" + response_obj["command"]["action"] + "`"
+                if "args" in response_obj["command"]:
+                    new_context += " given args " + str(response_obj["command"]["args"])
+                if "kwargs" in response_obj["command"]:
+                    new_context += " given kwargs " + str(
+                        response_obj["command"]["kwargs"]
+                    )
+                new_context += "\n It threw an error: " + str(exc)
+                self.context = new_context
+                logger.debug(new_context)
+                continue
 
+            # Some housekeeping.
             if self.verbose:
                 logger.info("\nAGENT RESPONSE: \n" + processed["agent_response"])
+
             self.actions_taken.append(processed["agent_response"])
             response_obj = processed["agent_response"]
             action_result = processed["action_result"]
