@@ -11,7 +11,7 @@ As an example, I created an `AgenticGPT` to [download investor presentations](..
 
 If my hypothesis in building this project is correct and this paradigm of agents will become more widespread, a few interesting implications emerge. While much has been said about prompt engineering in discourse today, less has been said about the hybrid between prompt engineering and traditional software engineering. For instance, while debugging errors in the above example, I had to ask myself to what extent an error was arising because (a) I did not write my code functions (the agent's `Action`s well enough), (b) I did not expose the right actions to the agent, (c) the foundation model's reasoning capabilities are not good enough yet, (d) I didn't prompt the agent with clear enough instructions, or (e) some combination of the above. 
 
-If I am right, then the "meta" of AI-enabled software development may change substantially as agents become more widespread. 
+If I am right, then the "meta" of AI-enabled software development may change substantially — to involve both "human instruction" debugging as well as "program" debugging — as agents become more widespread. 
 
 ##  🚧 June 9, 2023 update
 
