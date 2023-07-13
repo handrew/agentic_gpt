@@ -22,7 +22,7 @@ SUPPORTED_LANGUAGE_MODELS = OPENAI_MODELS
 
 
 def get_completion(
-    prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=1024, stop=["```"]
+    prompt, model="gpt-3.5-turbo", temperature=0, max_tokens=4096, stop=["```"]
 ):
     supported_models = list(SUPPORTED_LANGUAGE_MODELS.keys())
     assert (
