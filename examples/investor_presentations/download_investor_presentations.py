@@ -1,0 +1,192 @@
+"""Use AgenticGPT to download investor presentations."""
+import datetime
+import requests
+from dotenv import load_dotenv
+from urllib.parse import urlparse
+from bs4 import BeautifulSoup
+
+load_dotenv()
+from agentic_gpt.agent import AgenticGPT
+from agentic_gpt.agent.utils.llm_providers import get_completion
+from agentic_gpt.agent.action import Action
+from requests_html import HTMLSession
+
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+}
+
+
+def _get_domain_of_url(url):
+    """From https://www.example.com, get example.com."""
+    netloc = urlparse(url).netloc
+    return ".".join(netloc.split(".")[-2:])
+
+
+def get_company_website(ticker):
+    """Visits Yahoo! Finance to get the company website."""
+    url = f"https://finance.yahoo.com/quote/{ticker}/profile?p={ticker}"
+    resp = requests.get(url, headers=HEADERS)
+    soup = BeautifulSoup(resp.text, "html.parser")
+    profile = soup.find("div", {"class": "asset-profile-container"})
+    return profile.findAll("a")[-1]["href"]
+
+
+def get_self_links_and_pdf_links_from_url(url):
+    """Visits a url and grabs all the links that link back to itself."""
+    session = HTMLSession()
+    resp = session.get(url, headers=HEADERS)
+    resp.html.render(sleep=2)
+    links = resp.html.links
+    original_domain = _get_domain_of_url(url)
+    relevant_links = []
+    for link in links:
+        domain = _get_domain_of_url(link)
+        if domain == original_domain or link.endswith(".pdf"):
+            relevant_links.append(link)
+
+    return relevant_links
+
+
+def get_pdf_links(url):
+    """Visits a url and grabs all the links that end with pdf."""
+    links = get_self_links_and_pdf_links_from_url(url)
+    pdf_links = []
+    for link in links:
+        if link.endswith(".pdf"):
+            pdf_links.append(link)
+    return pdf_links
+
+
+def _choose_url_template(urls, where_am_i=None, objective=None):
+    """Set up a prompt to OpenAI to ask for what the right link is."""
+    assert (
+        where_am_i is not None
+    ), "Must give a description of where the urls came from."
+    assert objective is not None, "Must give an objective for choosing the urls."
+    prompt = f"""Below, you are given a list of URLs found on a publicly traded company's front page.
+
+{objective}\n\n"""
+
+    for url in urls:
+        prompt += f"{url}\n"
+
+    prompt += "\nPlease return your answer with the URL alone, with no other commentary or HTML tags."
+    prompt += "\nYour answer: "
+    completion = get_completion(prompt, model="gpt-3.5-turbo-16k")
+    return completion
+
+
+def choose_investor_relations_url(urls):
+    """In the list of urls given, find the one that links to the investor relations page."""
+    objective = 'I would like to get to the investor relations page, and in particular, any "events and presentations" page that may exist. It shouldn\'t be a url that leads to an announcement, but rather to the page which contains all the announcemenets. Please choose the url which links to the investor relations page or which you think will most likely link to the investor relations page.'
+    return _choose_url_template(
+        urls, where_am_i="publicly traded company's front page", objective=objective
+    )
+
+
+def choose_events_and_presentation_url(urls):
+    """In the list of urls given, find the one that links to the events and presentations url."""
+    objective = "I would like to get to the events and presentations page, or better yet, to the latest presentation."
+    return _choose_url_template(
+        urls,
+        where_am_i="publicly traded company's investor relations page",
+        objective=objective,
+    )
+
+
+def choose_latest_presentation_url(urls):
+    """In the list of urls given, find the one that links to the latest presentation."""
+    objective = "I would like to get to the latest investor presentation or earnings presentation."
+    return _choose_url_template(
+        urls,
+        where_am_i="publicly traded company's events and presentations page",
+        objective=objective,
+    )
+
+
+def download_pdf(url):
+    """Download a PDF from a url."""
+    assert url.endswith(".pdf"), "Provided url must be a PDF."
+    if url.startswith("//"):
+        url = "https:" + url
+
+    response = requests.get(url)
+    response.raise_for_status()
+
+    save_path = url.split("/")[-1]
+    with open(save_path, "wb") as file:
+        file.write(response.content)
+
+
+def main():
+    actions = [
+        Action(
+            name="get_company_website",
+            description="Given a stock ticker, visit Yahoo! Finance to get its corporate website.",
+            function=get_company_website,
+        ),
+        Action(
+            name="get_all_links",
+            description="Get relevant links from a url.",
+            function=get_self_links_and_pdf_links_from_url,
+        ),
+        Action(
+            name="get_pdf_links",
+            description="Get all the PDF links from a url.",
+            function=get_pdf_links,
+        ),
+        Action(
+            name="choose_investor_relations_url",
+            description="Given a list of links, choose the one that is most likely to be the investor relations URL.",
+            function=choose_investor_relations_url,
+        ),
+        Action(
+            name="choose_events_and_presentation_url",
+            description='Given a list of links, choose the one that is most likely to be the "Events and Presentations" URL.',
+            function=choose_events_and_presentation_url,
+        ),
+        Action(
+            name="choose_latest_presentation_url",
+            description="Given a list of links, choose the one that is most likely to be the latest presentation URL.",
+            function=choose_latest_presentation_url,
+        ),
+        Action(
+            name="download_pdf",
+            description="Download a PDF from a url",
+            function=download_pdf,
+        ),
+    ]
+
+    ticker = "EQT"
+    todays_date = datetime.datetime.today().strftime("%Y-%m-%d")
+    objective = f"""For the given ticker {ticker}:
+    1. Get to the company's website.
+    2. Find the investor relations page from the website. It should be a self link. Sometimes it will be called "Investors", "Investor Relations", or "IR".
+    3. If there is an "Events and Presentations" page, go to that page. If there is a separate Events or Calendar page and a Presentations page, then choose the Presentations page. 
+    4. Get all the PDF links from that page.
+    5. Find the latest presentation link and download it. Today's date is {todays_date}. The link must end with ".pdf"."""
+    agent = AgenticGPT(
+        objective, actions_available=actions, model="gpt-3.5-turbo-16k"
+    )
+    agent.run()
+
+
+if __name__ == "__main__":
+    # Correct sequence of actions:
+    # website = get_company_website("EQT")
+    # print("Company website: ", website)
+    # urls = get_self_links_and_pdf_links_from_url(website)
+    # chosen = choose_investor_relations_url(urls)
+    # print("Investor relations page: ", chosen)
+    # urls = get_self_links_and_pdf_links_from_url(chosen)
+    # chosen = choose_events_and_presentation_url(urls)
+    # print("Events and presentation page: ", chosen)
+    # self_and_pdf_links = get_self_links_and_pdf_links_from_url(chosen)
+    # pdf_links = [link for link in self_and_pdf_links if link.endswith(".pdf")]
+    # pdf_link = choose_latest_presentation_url(pdf_links)
+    # print(pdf_links)
+    # print(pdf_link)
+    # download_pdf(pdf_link, "test.pdf")
+
+    main()

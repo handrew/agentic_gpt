@@ -14,7 +14,7 @@ class Memory:
 
     def __init__(
         self,
-        documents: Dict[str, str] = {},
+        documents: Dict = {},
         model="gpt-3.5-turbo",
         embedding_model=None,
     ):
@@ -48,7 +48,9 @@ class Memory:
             )
         else:
             self.document_store = {}
-            self.router_index = None
+            self.router_index = init_index(
+                [], model=self.model, embedding_model=self.embedding_model
+            )
 
     def is_empty(self):
         """Returns True if the memory is empty."""
@@ -58,10 +60,8 @@ class Memory:
         """Print the memory as a string which can be injected into a prompt.
 
         The format is:
-        - <document 1 name>:
-            Summary: <document 1 summary>
-        - <document 2 name>:
-            Summary: <document 2 summary>
+        - <document 1 name>: <document 1 summary>
+        - <document 2 name>: <document 2 summary>
         ...
         """
         prompt = ""
@@ -70,8 +70,7 @@ class Memory:
             for name in self.documents.keys()
         ]
         for name, summary in summaries:
-            prompt += f"- {name}:\n"
-            prompt += f"    Summary: {summary}\n"
+            prompt += f"- {name}: {summary}\n"
         return prompt
 
     def get_document(self, name, query="Return the text verbatim.", max_length=5000):

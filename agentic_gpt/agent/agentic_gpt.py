@@ -1,6 +1,8 @@
 """AgenticGPT class."""
+import sys
 import json
 import logging
+import jinja2
 from typing import Dict
 from .action import Action
 from ..actions.ai_functions import ask_llm
@@ -22,7 +24,9 @@ CLARIFY_FUNCTION = "ask_user_to_clarify"
 def ask_user_to_clarify(question: str) -> str:
     """Ask the user a question and return their answer."""
     user_response = input(question + " ")
-    context = f"- Asked the question: \"{question}\"... Received response: \"{user_response}\""
+    context = (
+        f'- Asked the question: "{question}"... Received response: "{user_response}"'
+    )
     return {"context": context}
 
 
@@ -45,7 +49,7 @@ You can take the following actions. args are denoted as (arg1: str, arg2: int), 
 {actions}
 
 =============================================================
-These files are available to you in your memory:
+These files / variables are available to you in your memory:
 {files}
 
 =============================================================
@@ -78,7 +82,9 @@ EXAMPLE_RESPONSE_FORMAT = """
     }
 }
 
-Be mindful of stray commas!
+Where you can use curly braces to denote a variable from memory, e.g., "args": ["{{file_name}}", "arg2"]. To get a variable from memory, you have to reference it verbatim from the list of files above.
+You should provide thoughts and reasoning for your action.
+
 """
 
 
@@ -88,7 +94,7 @@ class AgenticGPT:
         objective,
         actions_available=[],
         memory_dict={},
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-16k",
         embedding_model="text-embedding-ada-002",
         ask_user_fn=ask_user_to_clarify,
         max_steps=100,
@@ -167,9 +173,9 @@ class AgenticGPT:
             ),
             Action(
                 name=ASK_LLM_FUNCTION,
-                description="Given a prompt, submit to a language model and return its answer. For instance, \"write me a poem about a squirrel\" would return a string response with a poem about a squirrel.",
+                description='Given a prompt, submit to a language model and return its answer. For instance, "write me a poem about a squirrel" would return a string response with a poem about a squirrel.',
                 function=ask_llm,
-            )
+            ),
         ]
         default_actions = default_actions + memory_actions
         self.actions_available = given_actions + default_actions
@@ -266,19 +272,43 @@ class AgenticGPT:
             }
             json.dump(saved_dict, f, indent=2)
 
+    def __template_from_memory(self, variable_string):
+        """Get variable string from memory."""
+        environment = jinja2.Environment(loader=jinja2.DictLoader({}))
+        template = environment.from_string(variable_string)
+        result = template.render(self.memory.documents)
+        if result != variable_string:  # Probably a dumb way to check...
+            if not result:
+                raise ValueError(f"{variable_string} is not a valid file in memory. Please try again.")
+            # If it's not the same, then we know that it was templated, and
+            # can consequently "eval" the result.
+            result = eval(result)
+        return result
+
     def process_response(self, response_obj) -> Dict:
         chosen_action = response_obj["command"]["action"]
         action_args = []
         if "args" in response_obj["command"]:
             action_args = response_obj["command"]["args"]
+            action_args = [self.__template_from_memory(arg) for arg in action_args]
 
         action_kwargs = {}
         if "kwargs" in response_obj["command"]:
             action_kwargs = response_obj["command"]["kwargs"]
+            action_kwargs = {
+                key: self.__template_from_memory(value)
+                for key, value in action_kwargs.items()
+            }
 
+        # Print out reasoning.
+        logger.info("\n\nThoughts: %s", response_obj["thoughts"]["text"])
+        logger.info("Reasoning: %s", response_obj["thoughts"]["reasoning"])
         logger.info("Chosen action: %s", chosen_action)
-        logger.info("Action args: %s", action_args)
-        logger.info("Action kwargs: %s", action_kwargs)
+        if self.verbose:
+            if action_args:
+                logger.info("Action args: %s", action_args)
+            if action_kwargs:
+                logger.info("Action kwargs: %s", action_kwargs)
 
         action_result = None
         for action in self.actions_available:
@@ -287,8 +317,17 @@ class AgenticGPT:
                 if isinstance(action_result, dict) and "context" in action_result:
                     self.context = action_result["context"]
                 else:
-                    self.context += "\n\nCommand: " + chosen_action + " executed."
-                    self.context += "\nResult: " + str(action_result)
+                    self.context += "\n\nCommand " + chosen_action + " executed."
+                    variable = f"{chosen_action}_result"
+                    self.context += "\nResult is stored in Memory as: " + variable
+                    try:
+                        serialized_result = json.dumps(action_result)
+                    except TypeError:
+                        raise TypeError(
+                            f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
+                        )
+                    self.memory.add_document(variable, serialized_result)
+                    logger.info(f"Completed action {chosen_action}. Result: {action_result}")
                 break
 
         return {"agent_response": response_obj, "action_result": action_result}
@@ -307,10 +346,6 @@ class AgenticGPT:
                 context=self.__get_context(),
                 example_response_format=EXAMPLE_RESPONSE_FORMAT,
             )
-            if self.verbose:
-                print("AGENT PROMPT:")
-                print(prompt)
-
             completion = get_completion(prompt, model=self.model)
             steps += 1
 
@@ -318,17 +353,17 @@ class AgenticGPT:
                 response_obj = json.loads(completion)
             except json.decoder.JSONDecodeError as exc:
                 logger.info(completion)
-                print(prompt)
+                logger.info(prompt)
                 logger.info("Invalid JSON response. Prompt shown above, completion below.")
-                print(completion)
                 self.context = self.context + "\nYou gave the answer: " + completion
                 self.context = self.context + "\nIt threw an error: " + str(exc)
                 self.context = self.context + "\nPlease try again."
-                import pdb; pdb.set_trace()
-                import sys
+                import pdb
+
+                pdb.set_trace()
                 sys.exit(1)
                 # continue
-        
+
             # TODO eventually figure this out
             # if self.chat_mode:
             #     message = "My thoughts are that: " + response_obj["thoughts"]["text"]
@@ -336,22 +371,26 @@ class AgenticGPT:
             #     message += "\nDo you think this is right?"
             #     self.ask_user_fn(message)
 
-            try:
-                processed = self.process_response(response_obj)
-            except Exception as exc:
-                new_context = f"\n\nThere was an error running your command, below. Be sure to conform to the given function signature.\n"
-                new_context += "`" + response_obj["command"]["action"] + "`"
-                if "args" in response_obj["command"]:
-                    new_context += " given args " + str(response_obj["command"]["args"])
-                if "kwargs" in response_obj["command"]:
-                    new_context += " given kwargs " + str(
-                        response_obj["command"]["kwargs"]
-                    )
-                new_context += "\n"
-                self.context = new_context
-                logger.debug(new_context)
-                continue
+            processed = self.process_response(response_obj)
+            # try:
+            #     processed = self.process_response(response_obj)
+            # except Exception as exc:
+            #     new_context = f"\n\nThere was an error running your command, below. Be sure to conform to the given function signature.\n"
+            #     new_context += "`" + response_obj["command"]["action"] + "`"
+            #     import pdb; pdb.set_trace()
+            #     if "args" in response_obj["command"]:
+            #         new_context += " given args " + str(response_obj["command"]["args"])
+            #     if "kwargs" in response_obj["command"]:
+            #         new_context += " given kwargs " + str(
+            #             response_obj["command"]["kwargs"]
+            #         )
+            #     new_context += "\n"
+            #     self.context = new_context
+            #     logger.debug(new_context)
+            #     continue
 
+            if self.verbose:
+                logger.info("\nAGENT RESPONSE: \n" + processed["agent_response"])
             self.actions_taken.append(processed["agent_response"])
             response_obj = processed["agent_response"]
             action_result = processed["action_result"]
