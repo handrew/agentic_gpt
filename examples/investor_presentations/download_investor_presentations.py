@@ -79,7 +79,11 @@ def _choose_url_template(urls, where_am_i=None, objective=None):
 
 def choose_investor_relations_url(urls):
     """In the list of urls given, find the one that links to the investor relations page."""
-    objective = 'I would like to get to the investor relations page, and in particular, any "events and presentations" page that may exist. It shouldn\'t be a url that leads to an announcement, but rather to the page which contains all the announcemenets. Please choose the url which links to the investor relations page or which you think will most likely link to the investor relations page.'
+    objective = """I would like to get to the investor relations page, and in particular, any "events and presentations" page that may exist.
+It shouldn\'t be a url that leads to a specific announcement, but rather to the page which contains all the announcements.
+Sometimes it will be called "Investors", "Investor Relations", or "IR".
+It should be the shortest link that leads to the investor relations page.
+Please choose the url which links to the investor relations page or which you think will most likely link to the investor relations page."""
     return _choose_url_template(
         urls, where_am_i="publicly traded company's front page", objective=objective
     )
@@ -87,7 +91,9 @@ def choose_investor_relations_url(urls):
 
 def choose_events_and_presentation_url(urls):
     """In the list of urls given, find the one that links to the events and presentations url."""
-    objective = "I would like to get to the events and presentations page, or better yet, to the latest presentation."
+    objective = """I would like to get to the events and presentations page, or better yet, to the latest presentation.
+It shouldn\'t be a url that leads to a specific announcement, but rather to the page which contains all the presentations.
+It should be the shortest link that leads to events and presentations page, or ideally, just the presentations page."""
     return _choose_url_template(
         urls,
         where_am_i="publicly traded company's investor relations page",
@@ -97,7 +103,8 @@ def choose_events_and_presentation_url(urls):
 
 def choose_latest_presentation_url(urls):
     """In the list of urls given, find the one that links to the latest presentation."""
-    objective = "I would like to get to the latest investor presentation or earnings presentation."
+    todays_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    objective = "I would like to get to the latest investor presentation or earnings presentation. Today's date is {todays_date}."
     return _choose_url_template(
         urls,
         where_am_i="publicly traded company's events and presentations page",
@@ -128,7 +135,7 @@ def main():
         ),
         Action(
             name="get_all_links",
-            description="Get relevant links from a url.",
+            description="Get relevant links from a url (links that link back to its own domain and links to PDFs).",
             function=get_self_links_and_pdf_links_from_url,
         ),
         Action(
@@ -163,15 +170,9 @@ def main():
     objective = f"""For the given ticker {ticker}:
 1. Get to the company's website.
 2. Find the investor relations page from the website.
-It should be a self link.
-Sometimes it will be called "Investors", "Investor Relations", or "IR".
-It should be the shortest link that leads to the investor relations page.
-Do not chose a url that is an announcement of an event.
 3. If there is an "Events and Presentations" page, go to that page.
-If there is a separate Events or Calendar page and a Presentations page, then choose the Presentations page.
-Do not chose a url that is an announcement of an event.
 4. Get all the PDF links from that page.
-5. Find the latest presentation link and download it. Today's date is {todays_date}. The link must end with ".pdf"."""
+5. Find the latest presentation link and download it. The link must end with ".pdf"."""
 
     agent = AgenticGPT(
         objective, actions_available=actions, model="gpt-3.5-turbo-16k"
