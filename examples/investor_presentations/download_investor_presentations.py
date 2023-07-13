@@ -173,20 +173,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # Correct sequence of actions:
-    # website = get_company_website("EQT")
-    # print("Company website: ", website)
-    # urls = get_self_links_and_pdf_links_from_url(website)
-    # chosen = choose_investor_relations_url(urls)
-    # print("Investor relations page: ", chosen)
-    # urls = get_self_links_and_pdf_links_from_url(chosen)
-    # chosen = choose_events_and_presentation_url(urls)
-    # print("Events and presentation page: ", chosen)
-    # self_and_pdf_links = get_self_links_and_pdf_links_from_url(chosen)
-    # pdf_links = [link for link in self_and_pdf_links if link.endswith(".pdf")]
-    # pdf_link = choose_latest_presentation_url(pdf_links)
-    # print(pdf_links)
-    # print(pdf_link)
-    # download_pdf(pdf_link, "test.pdf")
-
     main()
