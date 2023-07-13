@@ -3,7 +3,7 @@
 
 ## 🎉 July 12, 2023 update
 
-I decided to give this project another whirl before an upcoming hackathon. Some time away helped with unblocking on some of the problems I was encountering. In particular, I figured out how to pass variables between LLM API calls — using Jinja to template made it a lot easier to give the AI a way of calling variables in the `AgenticGPT` class's memory. 
+I decided to give this project another whirl before an upcoming hackathon. Some time away helped with unblocking some of the problems I was encountering. In particular, I figured out how to pass variables between LLM API calls — using Jinja to template made it a lot easier to give the AI a way of calling variables in the `AgenticGPT` class's memory. 
 
 At a higher level, I realized that my previous comment (below) about the LLM acting as a glorified "if" statement" was perhaps too reductive. Rather than seeing it as a limitation of the technology, I leaned into the fuzzy, "if-else" routing capacity as *the* primary enabler of today's crop of LLMs. Viewed in that light, a few things became possible: (1) obviously, value arises from being able to translate natural language to actions, executed through an assortment of code building blocks (though the inherent ambiguity of natural language poses some challenge for consistency) and (2) the LLM was able to dynamically reason about its environment and decide if it had accomplished its objective or not, like a human. By contrast, a traditional piece of software is hardcoded; it is inert, and cannot adapt to its environment. It breaks when encountering a situation it has not explicitly been given guidelines to address. 
 
