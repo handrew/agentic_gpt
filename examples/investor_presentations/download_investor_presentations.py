@@ -162,8 +162,14 @@ def main():
     todays_date = datetime.datetime.today().strftime("%Y-%m-%d")
     objective = f"""For the given ticker {ticker}:
     1. Get to the company's website.
-    2. Find the investor relations page from the website. It should be a self link. Sometimes it will be called "Investors", "Investor Relations", or "IR".
-    3. If there is an "Events and Presentations" page, go to that page. If there is a separate Events or Calendar page and a Presentations page, then choose the Presentations page. 
+    2. Find the investor relations page from the website.
+It should be a self link.
+Sometimes it will be called "Investors", "Investor Relations", or "IR".
+It should be the shortest link that leads to the investor relations page.
+Do not chose a url that is an announcement of an event.
+    3. If there is an "Events and Presentations" page, go to that page.
+If there is a separate Events or Calendar page and a Presentations page, then choose the Presentations page.
+Do not chose a url that is an announcement of an event.
     4. Get all the PDF links from that page.
     5. Find the latest presentation link and download it. Today's date is {todays_date}. The link must end with ".pdf"."""
     agent = AgenticGPT(
