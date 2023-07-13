@@ -8,7 +8,9 @@ from agentic_gpt.actions.filesystem import write as file_write
 if __name__ == "__main__":
     actions = [
         Action(
-            name="file_write", description="Write to file on file system.", function=file_write
+            name="file_write",
+            description="Write to file on file system.",
+            function=file_write,
         )
     ]
     agent = AgenticGPT(

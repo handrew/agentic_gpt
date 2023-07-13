@@ -7,7 +7,7 @@ import os
 def get_file_contents(filename):
     """Reads file into memory."""
     with open(filename, "r") as f:
-        return f.read() 
+        return f.read()
 
 
 def list_dir(path):
@@ -39,4 +39,4 @@ def append(path, contents):
     """Appends to a file."""
     with open(path, "a") as f:
         f.write(contents)
-    return"Appended to file: {}".format(path)
+    return "Appended to file: {}".format(path)
