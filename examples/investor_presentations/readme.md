@@ -60,7 +60,6 @@ actions = [
 
 ```python
 ticker = "EQT"
-todays_date = datetime.datetime.today().strftime("%Y-%m-%d")
 objective = f"""For the given ticker {ticker}:
 1. Get to the company's website.
 2. Find the investor relations page from the website.

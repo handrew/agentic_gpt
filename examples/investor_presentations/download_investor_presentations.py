@@ -42,7 +42,7 @@ def get_self_links_and_pdf_links_from_url(url):
     relevant_links = []
     for link in links:
         domain = _get_domain_of_url(link)
-        if domain == original_domain or link.endswith(".pdf"):
+        if domain == original_domain or domain.startswith("/") or link.endswith(".pdf"):
             relevant_links.append(link)
 
     return relevant_links
@@ -166,7 +166,6 @@ def main():
     ]
 
     ticker = "EQT"
-    todays_date = datetime.datetime.today().strftime("%Y-%m-%d")
     objective = f"""For the given ticker {ticker}:
 1. Get to the company's website.
 2. Find the investor relations page from the website.
@@ -175,7 +174,7 @@ def main():
 5. Find the latest presentation link and download it. The link must end with ".pdf"."""
 
     agent = AgenticGPT(
-        objective, actions_available=actions, model="gpt-3.5-turbo-16k"
+        objective, actions_available=actions, model="gpt-3.5-turbo-16k", max_steps=20
     )
     agent.run()
 
