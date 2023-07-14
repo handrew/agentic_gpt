@@ -13,5 +13,5 @@ if __name__ == "__main__":
     actions = [
         Action(name="say_hi", description="Say hi to the user.", function=say_hi)
     ]
-    agent = AgenticGPT("Say hello to the user!", actions_available=actions)
+    agent = AgenticGPT("Say hello to the user, then exit!", actions_available=actions)
     agent.run()

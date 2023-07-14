@@ -9,7 +9,7 @@ from .memory import Memory
 from .errors import AgentError
 from .utils.llm_providers import SUPPORTED_LANGUAGE_MODELS, get_completion
 from .utils.indexing import retrieve_segment_of_text
-from ..actions.ai_functions import ask_llm
+from ..actions.ai_functions import ask_llm, CLARIFY_FUNCTION
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,18 +18,6 @@ logger = logging.getLogger(__name__)
 SUPPORTED_EMBEDDING_MODELS = ["text-embedding-ada-002", "sentencetransformers"]
 
 """Define default actions for the agent."""
-
-CLARIFY_FUNCTION = "ask_user_to_clarify"
-
-
-def ask_user_to_clarify(question: str) -> str:
-    """Ask the user a question and return their answer."""
-    user_response = input(question + " ")
-    context = (
-        f'- Asked the question: "{question}"... Received response: "{user_response}"'
-    )
-    return {"context": context}
-
 
 DONE_FUNCTION = "declare_done"
 
@@ -97,7 +85,7 @@ class AgenticGPT:
         memory_dict={},
         model="gpt-3.5-turbo-16k",
         embedding_model="text-embedding-ada-002",
-        ask_user_fn=ask_user_to_clarify,
+        ask_user_fn=None,
         max_steps=100,
         verbose=False,
     ):
@@ -163,21 +151,27 @@ class AgenticGPT:
 
         default_actions = [
             Action(
-                name="ask_user_to_clarify",
-                description="Ask the user to clarify their instructions. Used when the information in the context is not enough to proceed to the next step.",
-                function=self.ask_user_fn,
+                name=ASK_LLM_FUNCTION,
+                description='Given a prompt, submit to a language model and return its answer. For instance, "write me a poem about a squirrel" would return a string response with a poem about a squirrel.',
+                function=ask_llm,
             ),
             Action(
                 name=DONE_FUNCTION,
                 description="Declare that you are done with your objective.",
                 function=declare_done,
             ),
-            Action(
-                name=ASK_LLM_FUNCTION,
-                description='Given a prompt, submit to a language model and return its answer. For instance, "write me a poem about a squirrel" would return a string response with a poem about a squirrel.',
-                function=ask_llm,
-            ),
         ]
+
+        if self.ask_user_fn:
+            default_actions.insert(
+                0,
+                Action(
+                    name="ask_user_to_clarify",
+                    description="Ask the user to clarify their instructions. Used when the information in the context is not enough to proceed to the next step.",
+                    function=self.ask_user_fn,
+                ),
+            )
+            
         default_actions = default_actions + memory_actions
         self.actions_available = given_actions + default_actions
 
@@ -332,7 +326,10 @@ class AgenticGPT:
                         raise TypeError(
                             f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
                         )
-                    self.memory.add_document(variable, serialized_result)
+                    
+                    if action_result is not None:
+                        self.memory.add_document(variable, serialized_result)
+
                     logger.info(
                         f"Completed action {chosen_action}. Result: {action_result}"
                     )
@@ -368,17 +365,18 @@ class AgenticGPT:
             try:
                 response_obj = json.loads(completion)
             except json.decoder.JSONDecodeError as exc:
-                logger.debug(prompt)
-                logger.debug(
-                    "Invalid JSON response. Prompt shown above, completion below."
+                logger.info(prompt)
+                logger.info(
+                    "!!! INVALID JSON RESPONSE. Prompt shown above, completion below."
                 )
-                logger.debug(completion)
+                logger.info(completion)
                 # Construct new context with error message.
                 self.context = self.context + "\nYou gave the answer: " + completion
                 self.context = (
                     self.context + "\nCould not decode answer as JSON: " + str(exc)
                 )
                 self.context = self.context + "\nPlease try again."
+                continue
 
             # TODO eventually figure this out
             # if self.chat_mode:
