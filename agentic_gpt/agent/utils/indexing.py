@@ -47,7 +47,7 @@ def retrieve_segment_of_text(query, text, model=None, embedding_model=None):
     return source
 
 
-def summarize_documents(docs, model=None, embedding_model=None):
+def summarize_documents(docs, query="Summarize in a few sentences.", model=None, embedding_model=None):
     """Given a list of documents, create a list of their summaries."""
     if model is None:
         model = "gpt-3.5-turbo"
@@ -61,9 +61,7 @@ def summarize_documents(docs, model=None, embedding_model=None):
             [doc], index_type="vector", model=model, embedding_model=embedding_model
         )
         query_engine = index.as_query_engine(response_mode="tree_summarize")
-        response = query_engine.query(
-            "Summarize in a few sentences. No need to be long or caveat. "
-        )
+        response = query_engine.query(query)
         summaries.append(response.response)
         indexes.append(index)
     return {"summaries": summaries, "indexes": indexes}

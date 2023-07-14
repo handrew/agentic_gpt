@@ -86,7 +86,7 @@ class Memory:
         """Add a document to the memory."""
         self.documents[name] = document
         llama_doc = Document(text=document)
-        summary_obj = summarize_documents([llama_doc])
+        summary_obj = summarize_documents([llama_doc], query="Describe the document.")
         summary = summary_obj["summaries"][0]
         index = summary_obj["indexes"][0]
         self.document_store[name] = {

@@ -288,6 +288,18 @@ class AgenticGPT:
             result = eval(result)
         return result
 
+    def __name_action_returned_variable(self, action_name):
+        """Given an `action_name`, check if it has been run before and if so,
+        give it a number to disambiguate it in the agent's memory."""
+        # Iterate through the Memory variables.
+        suffix = 1
+        for key, value in self.memory.documents.items():
+            if action_name in key:
+                # If we find a match, then we know that this action has been
+                # run before, and we can give it a number.
+                suffix += 1
+        return action_name + "_result_" + str(suffix)
+
     def process_response(self, response_obj) -> Dict:
         chosen_action = response_obj["command"]["action"]
         action_args = []
@@ -318,10 +330,12 @@ class AgenticGPT:
             if action.name == chosen_action:
                 action_result = action.execute(*action_args, **action_kwargs)
                 if isinstance(action_result, dict) and "context" in action_result:
+                    # Reset the context if the action returns a new one.
                     self.context = action_result["context"]
                 else:
+                    # Otherwise, append the action to the context.
                     self.context += "\n\nCommand " + chosen_action + " executed."
-                    variable = f"{chosen_action}_result"
+                    variable = self.__name_action_returned_variable(action.name)
                     self.context += "\nResult is stored in Memory as: " + variable
                     try:
                         serialized_result = json.dumps(action_result)
