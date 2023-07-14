@@ -59,7 +59,7 @@ agent = AgenticGPT(
 agent.run()
 ```
 
-`Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do. `Action` results are stored in context, unless a dict answer is given with `{"context": }` which sets the context accordingly.
+`Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do. `Action` results are stored in context as variables.
 
 #### ♻️ Reusing saved routines
 You can then save the steps that the LLM generated using

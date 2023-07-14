@@ -142,11 +142,6 @@ class AgenticGPT:
                 description="Query the Memory to synthesize an answer from one document. Useful for summarization and retrieval using information from a single doc.",
                 function=self.memory.query_one,
             ),
-            Action(
-                name="load_document_from_memory",
-                description="Load a document verbatim from the Memory into `context`.",
-                function=self.__load_document_from_memory_into_context,
-            ),
         ]
 
         default_actions = [
@@ -196,12 +191,15 @@ class AgenticGPT:
         """Get a string to inject into the prompt telling the agent what
         actions it has taken so far."""
 
-        actions = "\n".join(
-            [
-                "- " + action["command"]["action"] + " using args " + str(action["command"]["args"]) + " and kwargs " + str(action["command"]["kwargs"])
-                for action in self.actions_taken
-            ]
-        )
+        actions = []
+        for action in self.actions_taken:
+            action_bullet_str = "- " + action["command"]["action"]
+            if "args" in action["command"]:
+                action_bullet_str += " with args " + str(action["command"]["args"])
+            if "kwargs" in action["command"]:
+                action_bullet_str += " and kwargs " + str(action["command"]["kwargs"])
+
+        actions = "\n".join(actions)
         if actions.strip():
             return actions
         else:
@@ -211,18 +209,6 @@ class AgenticGPT:
         """Get a string to inject into the prompt telling the agent what
         files it has in its memory."""
         return self.memory.to_prompt_string()
-
-    def __load_document_from_memory_into_context(self, document_name: str):
-        """Load a document from the Memory into the context."""
-        max_length = SUPPORTED_LANGUAGE_MODELS[self.model]["max_length"]
-        query = (
-            "Find the part of the document which most helps me with objective: "
-            + self.objective
-        )
-        doc_text = self.memory.get_document(
-            document_name, query=query, max_length=max_length
-        )
-        return {"context": doc_text}
 
     def __get_context(self) -> str:
         """Get a string to inject into the prompt telling the agent what
@@ -329,27 +315,22 @@ class AgenticGPT:
         for action in self.actions_available:
             if action.name == chosen_action:
                 action_result = action.execute(*action_args, **action_kwargs)
-                if isinstance(action_result, dict) and "context" in action_result:
-                    # Reset the context if the action returns a new one.
-                    self.context = action_result["context"]
-                else:
-                    # Otherwise, append the action to the context.
-                    self.context += "\n\nCommand " + chosen_action + " executed."
-                    variable = self.__name_action_returned_variable(action.name)
-                    self.context += "\nResult is stored in Memory as: " + variable
-                    try:
-                        serialized_result = json.dumps(action_result)
-                    except TypeError:
-                        raise TypeError(
-                            f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
-                        )
-                    
-                    if action_result is not None:
-                        self.memory.add_document(variable, serialized_result)
-
-                    logger.info(
-                        f"Completed action {chosen_action}. Result: {action_result}"
+                self.context += "\n\nCommand " + chosen_action + " executed."
+                variable = self.__name_action_returned_variable(action.name)
+                self.context += "\nResult is stored in Memory as: " + variable
+                try:
+                    serialized_result = json.dumps(action_result)
+                except TypeError:
+                    raise TypeError(
+                        f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
                     )
+                
+                if action_result is not None:
+                    self.memory.add_document(variable, serialized_result)
+
+                logger.info(
+                    f"Completed action {chosen_action}. Result: {action_result}"
+                )
                 break
 
         return {"agent_response": response_obj, "action_result": action_result}

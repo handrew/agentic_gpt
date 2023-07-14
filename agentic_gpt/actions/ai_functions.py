@@ -16,4 +16,4 @@ def ask_user_to_clarify(question: str) -> str:
     context = (
         f'- Asked the question: "{question}"... Received response: "{user_response}"'
     )
-    return {"context": context}
+    return context
