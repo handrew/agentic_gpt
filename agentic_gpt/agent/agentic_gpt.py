@@ -202,7 +202,9 @@ class AgenticGPT:
         """Get a string to inject into the prompt telling the agent what
         actions it has taken so far."""
 
-        actions = "\n".join(["- " + action["command"]["action"] for action in self.actions_taken])
+        actions = "\n".join(
+            ["- " + action["command"]["action"] for action in self.actions_taken]
+        )
         if actions.strip():
             return actions
         else:
@@ -281,7 +283,9 @@ class AgenticGPT:
         result = template.render(self.memory.documents)
         if result != variable_string:  # Probably a dumb way to check...
             if not result:
-                raise AgentError(f"{variable_string} is not a valid file in memory. Please try again.")
+                raise AgentError(
+                    f"{variable_string} is not a valid file in memory. Please try again."
+                )
             # If it's not the same, then we know that it was templated, and
             # can consequently "eval" the result.
             result = eval(result)
@@ -329,7 +333,9 @@ class AgenticGPT:
                             f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
                         )
                     self.memory.add_document(variable, serialized_result)
-                    logger.info(f"Completed action {chosen_action}. Result: {action_result}")
+                    logger.info(
+                        f"Completed action {chosen_action}. Result: {action_result}"
+                    )
                 break
 
         return {"agent_response": response_obj, "action_result": action_result}
@@ -357,11 +363,15 @@ class AgenticGPT:
                 response_obj = json.loads(completion)
             except json.decoder.JSONDecodeError as exc:
                 logger.debug(prompt)
-                logger.debug("Invalid JSON response. Prompt shown above, completion below.")
+                logger.debug(
+                    "Invalid JSON response. Prompt shown above, completion below."
+                )
                 logger.debug(completion)
                 # Construct new context with error message.
                 self.context = self.context + "\nYou gave the answer: " + completion
-                self.context = self.context + "\nCould not decode answer as JSON: " + str(exc)
+                self.context = (
+                    self.context + "\nCould not decode answer as JSON: " + str(exc)
+                )
                 self.context = self.context + "\nPlease try again."
 
             # TODO eventually figure this out
