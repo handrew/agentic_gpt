@@ -26,4 +26,4 @@ class Action:
 
     def execute(self, *args):
         """Execute the action with the given arguments."""
-            return self.function(*args)
+        return self.function(*args)
