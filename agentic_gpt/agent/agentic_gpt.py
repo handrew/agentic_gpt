@@ -197,7 +197,10 @@ class AgenticGPT:
         actions it has taken so far."""
 
         actions = "\n".join(
-            ["- " + action["command"]["action"] for action in self.actions_taken]
+            [
+                "- " + action["command"]["action"] + " using args " + str(action["command"]["args"]) + " and kwargs " + str(action["command"]["kwargs"])
+                for action in self.actions_taken
+            ]
         )
         if actions.strip():
             return actions
