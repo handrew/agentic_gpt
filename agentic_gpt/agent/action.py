@@ -1,6 +1,7 @@
 """Action class abstraction."""
 from inspect import signature
 from typing import Callable
+from .errors import AgentError
 
 
 class Action:
@@ -26,4 +27,7 @@ class Action:
 
     def execute(self, *args):
         """Execute the action with the given arguments."""
-        return self.function(*args)
+        try:
+            return self.function(*args)
+        except Exception as e:
+            raise AgentError("Error executing action. Error message: " + str(e))

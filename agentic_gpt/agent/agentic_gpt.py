@@ -358,6 +358,12 @@ class AgenticGPT:
             completion = get_completion(prompt, model=self.model)
             steps += 1
 
+            logger.info(f"Taken steps {steps} of maximum {self.max_steps}.")
+
+            if self.verbose:
+                logger.info("PROMPT: \n" + prompt)
+                logger.info("AGENT RESPONSE: " + completion)
+
             # Try loading the completion as JSON.
             try:
                 response_obj = json.loads(completion)
@@ -386,23 +392,19 @@ class AgenticGPT:
                 processed = self.process_response(response_obj)
             except AgentError as exc:
                 # Construct new context with error message.
-                new_context = f"\nRan "
+                new_context = f"\nJust tried running action "
                 new_context += "`" + response_obj["command"]["action"] + "`"
                 if "args" in response_obj["command"]:
                     new_context += " given args " + str(response_obj["command"]["args"])
                 if "kwargs" in response_obj["command"]:
-                    new_context += " given kwargs " + str(
+                    new_context += " and given kwargs " + str(
                         response_obj["command"]["kwargs"]
                     )
-                new_context += "\n It threw an error: " + str(exc)
+                new_context += "\nIt threw an error: " + str(exc)
                 self.context = new_context
                 continue
 
             # Some housekeeping.
-            if self.verbose:
-                logger.info("PROMPT: \n" + prompt)
-                logger.info("AGENT RESPONSE: \n" + str(processed["agent_response"]))
-
             self.actions_taken.append(processed["agent_response"])
             response_obj = processed["agent_response"]
             action_result = processed["action_result"]
