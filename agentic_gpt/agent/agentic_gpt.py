@@ -396,13 +396,12 @@ class AgenticGPT:
                     )
                 new_context += "\n It threw an error: " + str(exc)
                 self.context = new_context
-                logger.debug(new_context)
                 continue
 
             # Some housekeeping.
             if self.verbose:
-                logger.debug("PROMPT: \n", prompt)
-                logger.debug("AGENT RESPONSE: \n" + str(processed["agent_response"]))
+                logger.info("PROMPT: \n" + prompt)
+                logger.info("AGENT RESPONSE: \n" + str(processed["agent_response"]))
 
             self.actions_taken.append(processed["agent_response"])
             response_obj = processed["agent_response"]
