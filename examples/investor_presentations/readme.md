@@ -25,7 +25,7 @@ actions = [
     ),
     Action(
         name="get_all_links",
-        description="Get relevant links from a url.",
+        description="Get relevant links from a url (links that link back to its own domain and links to PDFs).",
         function=get_self_links_and_pdf_links_from_url,
     ),
     Action(
@@ -35,17 +35,17 @@ actions = [
     ),
     Action(
         name="choose_investor_relations_url",
-        description="Given a list of links, choose the one that is most likely to be the investor relations URL.",
+        description="Given a list of links, choose the one that is most likely to be the investor relations URL. Usually called after `get_all_links`.",
         function=choose_investor_relations_url,
     ),
     Action(
         name="choose_events_and_presentation_url",
-        description='Given a list of links, choose the one that is most likely to be the "Events and Presentations" URL.',
+        description='Given a list of links, choose the one that is most likely to be the "Events and Presentations" URL. Usually called after `get_all_links`',
         function=choose_events_and_presentation_url,
     ),
     Action(
         name="choose_latest_presentation_url",
-        description="Given a list of links, choose the one that is most likely to be the latest presentation URL.",
+        description="Given a list of links, choose the one that is most likely to be the latest presentation URL. Always called after `get_pdf_links`",
         function=choose_latest_presentation_url,
     ),
     Action(
