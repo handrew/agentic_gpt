@@ -54,7 +54,7 @@ These files / variables are available to you in your memory:
 {files}
 
 =============================================================
-You have taken the following actions so far:
+You have taken the following actions so far. Try not to repeat yourself unless necessary.
 {actions_taken}
 
 =============================================================
@@ -201,7 +201,8 @@ class AgenticGPT:
     def __get_actions_taken(self) -> str:
         """Get a string to inject into the prompt telling the agent what
         actions it has taken so far."""
-        actions = "\n".join(["- " + str(action) for action in self.actions_taken])
+
+        actions = "\n".join(["- " + action["command"]["action"] for action in self.actions_taken])
         if actions.strip():
             return actions
         else:
@@ -390,7 +391,8 @@ class AgenticGPT:
 
             # Some housekeeping.
             if self.verbose:
-                logger.info("\nAGENT RESPONSE: \n" + processed["agent_response"])
+                logger.debug("PROMPT: \n", prompt)
+                logger.debug("AGENT RESPONSE: \n" + str(processed["agent_response"]))
 
             self.actions_taken.append(processed["agent_response"])
             response_obj = processed["agent_response"]
