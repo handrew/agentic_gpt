@@ -130,6 +130,8 @@ def download_pdf(url):
     response.raise_for_status()
 
     save_path = url.split("/")[-1]
+    if not save_path.endswith(".pdf"):
+        save_path += ".pdf"
     with open(save_path, "wb") as file:
         file.write(response.content)
 
