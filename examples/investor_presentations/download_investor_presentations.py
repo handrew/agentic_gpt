@@ -47,7 +47,7 @@ def get_self_links_and_pdf_links_from_url(url):
             if href is None:
                 continue
             domain = _get_domain_of_url(href)
-            if domain == original_domain or domain.startswith("/") or href.endswith(
+            if domain == original_domain or href.startswith("/") or href.endswith(
                 ".pdf"
             ):
                 relevant_links.append(href)
