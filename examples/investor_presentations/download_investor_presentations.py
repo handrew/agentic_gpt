@@ -79,7 +79,7 @@ def _choose_url_template(urls, where_am_i=None, objective=None):
     for url in urls:
         prompt += f"{url}\n"
 
-    prompt += "\nPlease return your answer with the URL alone, with no other commentary or HTML tags."
+    prompt += "\nPlease return your answer with the URL alone, with no other commentary or HTML tags. Do not enclose it in quotes as a string."
     prompt += "\nYour answer: "
     completion = get_completion(prompt, model="gpt-3.5-turbo-16k")
     return completion
