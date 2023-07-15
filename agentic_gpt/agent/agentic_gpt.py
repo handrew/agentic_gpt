@@ -261,6 +261,8 @@ class AgenticGPT:
 
     def __template_from_memory(self, variable_string):
         """Get variable string from memory."""
+        if not isinstance(variable_string, str):
+            return variable_string
         environment = jinja2.Environment(loader=jinja2.DictLoader({}))
         template = environment.from_string(variable_string)
         result = template.render(self.memory.documents)
