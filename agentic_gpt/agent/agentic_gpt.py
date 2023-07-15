@@ -197,6 +197,7 @@ class AgenticGPT:
                 action_bullet_str += " with args " + str(action["command"]["args"])
             if "kwargs" in action["command"]:
                 action_bullet_str += " and kwargs " + str(action["command"]["kwargs"])
+            actions.append(action_bullet_str)
 
         actions = "\n".join(actions)
         if actions.strip():
