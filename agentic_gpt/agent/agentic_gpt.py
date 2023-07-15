@@ -319,7 +319,6 @@ class AgenticGPT:
                 action_result = action.execute(*action_args, **action_kwargs)
                 self.context += "\n\nCommand " + chosen_action + " executed."
                 variable = self.__name_action_returned_variable(action.name)
-                self.context += "\nResult is stored in Memory as: " + variable
                 try:
                     serialized_result = json.dumps(action_result)
                 except TypeError:
@@ -329,6 +328,7 @@ class AgenticGPT:
                 
                 if action_result is not None:
                     self.memory.add_document(variable, serialized_result)
+                    self.context += "\nResult is stored in Memory as: " + variable
 
                 logger.info(
                     f"Completed action {chosen_action}. Result: {action_result}"
