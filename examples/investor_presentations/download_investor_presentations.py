@@ -9,7 +9,7 @@ load_dotenv()
 from agentic_gpt.agent import AgenticGPT
 from agentic_gpt.agent.utils.llm_providers import get_completion
 from agentic_gpt.agent.action import Action
-from requests_html import HTMLSession
+from playwright.sync_api import sync_playwright
 
 
 HEADERS = {
@@ -34,19 +34,26 @@ def get_company_website(ticker):
 
 def get_self_links_and_pdf_links_from_url(url):
     """Visits a url and grabs all the links that link back to itself."""
-    session = HTMLSession()
-    resp = session.get(url, headers=HEADERS)
-    resp.html.render(sleep=2)
-    links = resp.html.links
-    original_domain = _get_domain_of_url(url)
-    relevant_links = []
-    for link in links:
-        domain = _get_domain_of_url(link)
-        if domain == original_domain or domain.startswith("/") or link.endswith(".pdf"):
-            relevant_links.append(link)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page()
+        page.goto(url)
+        page.wait_for_load_state("networkidle")
+        links = page.query_selector_all("a")
+        original_domain = _get_domain_of_url(url)
+        relevant_links = []
+        for link in links:
+            href = link.get_attribute("href")
+            if href is None:
+                continue
+            domain = _get_domain_of_url(href)
+            if domain == original_domain or domain.startswith("/") or href.endswith(
+                ".pdf"
+            ):
+                relevant_links.append(href)
 
-    session.close()
-    return relevant_links
+        browser.close()
+        return relevant_links
 
 
 def get_pdf_links(url):
@@ -172,10 +179,11 @@ def main():
 2. Find the investor relations page from the website.
 3. If there is an "Events and Presentations" page, go to that page.
 4. Get all the PDF links from that page.
-5. Find the latest presentation link and download it. The link must end with ".pdf"."""
+5. Find the latest presentation link and download it. The link must end with ".pdf".
+6. Then you're done!"""
 
     agent = AgenticGPT(
-        objective, actions_available=actions, model="gpt-3.5-turbo-16k", max_steps=20
+        objective, actions_available=actions, model="gpt-3.5-turbo-16k", max_steps=15
     )
     agent.run()
 

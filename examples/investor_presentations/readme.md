@@ -75,7 +75,9 @@ agent = AgenticGPT(
 
 You run it as you would a normal script:
 
-`python download_investor_presentations.py`.
+1. You should `pip install requirements.txt` from the root directory into whatever virtual environment you like.
+2. Then you need to install the Chromium drivers using `playwright install`.
+3. Finally, run the script with `python download_investor_presentations.py`.
 
 ## Output
 It doesn't always get it right, but the below was a correct run.
