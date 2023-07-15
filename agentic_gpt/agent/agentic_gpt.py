@@ -1,4 +1,5 @@
 """AgenticGPT class."""
+import sys
 import json
 import logging
 import jinja2
@@ -319,9 +320,15 @@ class AgenticGPT:
                 action_result = action.execute(*action_args, **action_kwargs)
                 self.context += "\n\nCommand " + chosen_action + " executed."
                 variable = self.__name_action_returned_variable(action.name)
-               
+                try:
+                    serialized_result = json.dumps(action_result)
+                except TypeError:
+                    raise TypeError(
+                        f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
+                    )
+                
                 if action_result is not None:
-                    self.memory.add_document(variable, action_result)
+                    self.memory.add_document(variable, serialized_result)
                     self.context += "\nResult is stored in Memory as: " + variable
 
                 logger.info(
