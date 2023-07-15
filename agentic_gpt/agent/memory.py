@@ -4,6 +4,7 @@ The Context class abstracts the details of the context from the agent. It
 takes care of embedding the documents, indexing them, and retrieving
 them, as well as the bookkeeping of the documents.
 """
+import json
 from llama_index import Document
 from typing import Dict
 from .utils.indexing import init_index, summarize_documents, retrieve_segment_of_text
@@ -82,10 +83,17 @@ class Memory:
             )
         return text
 
-    def add_document(self, name: str, document: str):
+    def add_document(self, name: str, document):
         """Add a document to the memory."""
         self.documents[name] = document
-        llama_doc = Document(text=document)
+
+        # Try to serialize the document as JSON. If it fails, just use the string.
+        try:
+            serialized_text = json.dumps(document)
+        except TypeError:
+            serialized_text = str(document)
+
+        llama_doc = Document(text=serialized_text)
         summary_obj = summarize_documents([llama_doc], query="Describe the document.")
         summary = summary_obj["summaries"][0]
         index = summary_obj["indexes"][0]
