@@ -85,7 +85,7 @@ class Memory:
     def add_document(self, name: str, document: str):
         """Add a document to the memory."""
         self.documents[name] = document
-        llama_doc = Document(text=document)
+        llama_doc = Document(text=str(document))
         summary_obj = summarize_documents([llama_doc], query="Describe the document.")
         summary = summary_obj["summaries"][0]
         index = summary_obj["indexes"][0]
@@ -94,7 +94,7 @@ class Memory:
             "summary": summary,
             "index": index,
         }
-        self.router_index.insert(Document(text=document))
+        self.router_index.insert(Document(text=str(document)))
 
     def query_all(self, query):
         """Query and get a response synthesized from all of the docs."""

@@ -2,8 +2,8 @@
 import sys
 import json
 import logging
-import jinja2
 from typing import Dict
+from jinja2 import Environment, DictLoader, meta
 from .action import Action
 from .memory import Memory
 from .errors import AgentError
@@ -75,6 +75,19 @@ Where you can use curly braces to denote a variable from memory, e.g., "args": [
 You should provide thoughts and reasoning for your action.
 
 """
+
+
+def get_variable_from_jinja2_expression(expression):
+    """Helper function to get the first variable name from a Jinja2 expression."""
+    # Create a temporary environment to parse the expression
+    env = Environment()
+    ast = env.parse(expression)
+
+    # Find undeclared variables in the expression
+    variables = meta.find_undeclared_variables(ast)
+
+    # If there are no variables, return None; otherwise, return the variable name
+    return next(iter(variables), None)
 
 
 class AgenticGPT:
@@ -262,12 +275,36 @@ class AgenticGPT:
 
     def __template_from_memory(self, variable_string):
         """Get variable string from memory."""
+
+        # If it's not a string, then we know that it's not a variable, so we
+        # can just return it.
         if not isinstance(variable_string, str):
             return variable_string
-        environment = jinja2.Environment(loader=jinja2.DictLoader({}))
+        
+        # If it's a string, get the variable name from the Jinja2 expression.
+        variable_name = get_variable_from_jinja2_expression(variable_string)
+        if variable_name is None:  # No variable name found.
+            return variable_string
+
+        # If variable name found, check if the variable is in memory.
+        if variable_name not in self.memory.documents:
+            raise AgentError(
+                f"{variable_name} is not a valid file in memory. Please try again."
+            )
+        
+        # If it's in memory, then check if the memory document is a string.
+        # If not, then we know it's some object that we can't eval, so
+        # we just return it.
+        if not isinstance(self.memory.documents[variable_name], str):
+            return self.memory.documents[variable_name]
+
+        # If it's in memory and the memory document is a string, then we can
+        # try to template and eval it. We eval it because it might be a str
+        # with quotes that we want to remove.
+        environment = Environment(loader=DictLoader({}))
         template = environment.from_string(variable_string)
         result = template.render(self.memory.documents)
-        if result != variable_string:  # Probably a dumb way to check...
+        if result != variable_string:  # Dumb check to see if it's the same.
             if not result:
                 raise AgentError(
                     f"{variable_string} is not a valid file in memory. Please try again."
@@ -320,15 +357,18 @@ class AgenticGPT:
                 action_result = action.execute(*action_args, **action_kwargs)
                 self.context += "\n\nCommand " + chosen_action + " executed."
                 variable = self.__name_action_returned_variable(action.name)
+
+                successfully_serialized = True
                 try:
                     serialized_result = json.dumps(action_result)
                 except TypeError:
-                    raise TypeError(
-                        f"Result from action {chosen_action} is not JSON serializable. Make sure that the `Action` you wrote returns a JSON serializable object."
-                    )
+                    successfully_serialized = False
                 
                 if action_result is not None:
-                    self.memory.add_document(variable, serialized_result)
+                    if successfully_serialized:
+                        self.memory.add_document(variable, serialized_result)
+                    else:
+                        self.memory.add_document(variable, action_result)
                     self.context += "\nResult is stored in Memory as: " + variable
 
                 logger.info(
