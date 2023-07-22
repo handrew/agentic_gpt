@@ -1,5 +1,6 @@
 """PlaywrightAgent abstraction, which inherits from AgenticGPT."""
 import time
+import json
 import logging
 from agentic_gpt.agent import AgenticGPT
 from agentic_gpt.agent.action import Action
@@ -47,6 +48,7 @@ class PlaywrightAgent(AgenticGPT):
         playwright_obj,
         objective,
         headless=False,
+        cookies="",
         actions_available=[],
         model="gpt-4",
         max_steps=100,
@@ -66,8 +68,18 @@ class PlaywrightAgent(AgenticGPT):
         self.playwright = playwright_obj
         self.headless = headless
         self.browser = playwright_obj.chromium.launch(headless=headless)
-        self.page = self.browser.new_page()
-        # To be set by __prepocess_html_for_prompt.
+        self.browser_context = self.browser.new_context()
+        self.cookies = cookies
+        self.page = self.browser_context.new_page()
+
+        if self.cookies:
+            if isinstance(self.cookies, str):
+                with open(self.cookies, "r") as f:
+                    self.cookies = json.loads(f.read())
+
+            self.browser_context.add_cookies(self.cookies)
+
+        # To be set by __preprocess_html_for_prompt.
         self._current_browser_mapping = None
 
         # Instantiate the action set.
@@ -129,7 +141,7 @@ class PlaywrightAgent(AgenticGPT):
         try:
             element_object = self.__get_object_from_mapping(element_id_num)
             element_object.click()
-            self.page.wait_for_load_state("networkidle")
+            time.sleep(2)
             context = self.__get_context()
             return {"context": context}
         except playwright._impl._api_types.Error as exc:
@@ -151,7 +163,7 @@ class PlaywrightAgent(AgenticGPT):
             element_object = self.__get_object_from_mapping(element_id_num)
             element_object.fill(text)
             element_object.press("Enter")
-            self.page.wait_for_load_state("networkidle")
+            time.sleep(2)
             context = self.__get_context()
             return {"context": context}
         except playwright._impl._api_types.Error as exc:
@@ -160,7 +172,7 @@ class PlaywrightAgent(AgenticGPT):
     def __go_to_page(self, url):
         """Go to a page."""
         self.page.goto(url)
-        self.page.wait_for_load_state("networkidle")
+        time.sleep(2)
         context = self.__get_context()
         return {"context": context}
 
@@ -255,6 +267,12 @@ class PlaywrightAgent(AgenticGPT):
         self._current_browser_mapping = mapping
         prompt_str = get_current_browser_view_from_mapping(mapping)
         return prompt_str
+    
+    def save_cookies(self, output_file):
+        """Save cookies to a file."""
+        cookies = self.browser_context.cookies()
+        with open(output_file, "w") as f:
+            f.write(json.dumps(cookies))
 
 
 def main():
