@@ -61,6 +61,12 @@ agent.run()
 
 `Action`s are instantiated with a `name`, `description`, and `function`. The `name`, `description`, and function signature are then injected into the agent prompt to tell them what they can do. `Action` results are stored in context as variables, unless a dict answer is given with `{"context": }` which sets the context accordingly.
 
+#### 🏛️ Registry
+
+You can contribute or use agents built on top of `AgenticGPT` in the [registry](agentic_gpt/registry/readme.md). Right now the following `AgenticGPT`-based agents exist. 
+
+- `PlaywrightAgent`: Uses `AgenticGPT` to automate browser actions.
+
 #### ♻️ Reusing saved routines
 You can then save the steps that the LLM generated using
 
