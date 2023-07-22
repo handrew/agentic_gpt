@@ -355,25 +355,29 @@ class AgenticGPT:
         for action in self.actions_available:
             if action.name == chosen_action:
                 action_result = action.execute(*action_args, **action_kwargs)
-                self.context += "\n\nCommand " + chosen_action + " executed."
-                variable = self.__name_action_returned_variable(action.name)
+                if isinstance(action_result, dict) and "context" in action_result:
+                    # Reset the context if the action returns a new one.
+                    self.context = action_result["context"]
+                else:
+                    self.context += "\n\nCommand " + chosen_action + " executed."
+                    variable = self.__name_action_returned_variable(action.name)
 
-                successfully_serialized = True
-                try:
-                    serialized_result = json.dumps(action_result)
-                except TypeError:
-                    successfully_serialized = False
-                
-                if action_result is not None:
-                    if successfully_serialized:
-                        self.memory.add_document(variable, serialized_result)
-                    else:
-                        self.memory.add_document(variable, action_result)
-                    self.context += "\nResult is stored in Memory as: " + variable
+                    successfully_serialized = True
+                    try:
+                        serialized_result = json.dumps(action_result)
+                    except TypeError:
+                        successfully_serialized = False
+                    
+                    if action_result is not None:
+                        if successfully_serialized:
+                            self.memory.add_document(variable, serialized_result)
+                        else:
+                            self.memory.add_document(variable, action_result)
+                        self.context += "\nResult is stored in Memory as: " + variable
 
-                logger.info(
-                    f"Completed action {chosen_action}. Result: {action_result}"
-                )
+                    logger.info(
+                        f"Completed action {chosen_action}. Result: {action_result}"
+                    )
                 break
 
         return {"agent_response": response_obj, "action_result": action_result}
