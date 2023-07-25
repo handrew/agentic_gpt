@@ -67,7 +67,7 @@ def openai_call(
         print(exc)
         print("Error from OpenAI's API. Sleeping for a few seconds.")
         time.sleep(5)
-        text = get_completion(
+        text = openai_call( 
             prompt,
             model=model,
             temperature=temperature,
